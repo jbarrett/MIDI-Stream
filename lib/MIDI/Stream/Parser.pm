@@ -14,6 +14,8 @@ class MIDI::Stream::Parser {
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
     use MIDI::Stream::Tables ':all';
+    use Syntax::Operator::Equ;
+    use namespace::autoclean;
 
     field $zero_index_channel  :param = 1;
     field $sysex_as_string     :param = 1;
@@ -28,7 +30,7 @@ class MIDI::Stream::Parser {
     field $event_cb :param = sub { @_ };
     field $filter_cb = {};
 
-    field $name :param = 'midi_stream:' . gettimeofday;
+    field $name :reader :param = 'midi_stream:' . gettimeofday;
 
     field @events;
     field @pending_event;
@@ -78,7 +80,7 @@ class MIDI::Stream::Parser {
         push @callbacks, ( $filter_cb->{ $event->[0] } // [] )->@*;
 
         for my $cb ( @callbacks ) {
-            last unless $cb->( $name, $dt, $event ) eq $self->continue;
+            last unless $cb->( $name, $dt, $event ) equ $self->continue;
         }
 
         $event_cb->( $event );
@@ -120,7 +122,7 @@ class MIDI::Stream::Parser {
 
                 # Any non-Real-Time status byte ends a SysEx
                 # Push the sysex and proceed ...
-                if ( $pending_event[0] eq 'sysex' ) {
+                if ( $pending_event[0] equ 'sysex' ) {
                     $self->_push_event;
                     @pending_event = ();
                 }
