@@ -44,6 +44,7 @@ sub status_name {
 
 sub status_byte {
     my ( $status_name, $channel ) = @_;
+    $channel //= 0;
     my $byte = $status{ $status_name } // $fstatus{ $status_name };
     $byte |= ( $channel & 0x0f ) if has_channel( $byte );
     $byte;
