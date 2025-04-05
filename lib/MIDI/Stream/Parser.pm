@@ -26,7 +26,7 @@ class MIDI::Stream::Parser {
     field $mode_rpn   :param = $mode_14bit;
     field $mode_nrpn  :param = $mode_14bit;
 
-    field $error_cb :param = sub { croak @_; };
+    field $warn_cb :param = sub { carp( @_ ); };
     field $event_cb :param = sub { @_ };
     field $filter_cb = {};
 
@@ -98,7 +98,7 @@ class MIDI::Stream::Parser {
                 my $status = shift @bytes;
                 my $status_name = status_name( $status );
 
-                $self->throw( sprintf( "Unsupported status type: 0x%x", $status ) )
+                $self->_w( sprintf( "Unsupported status type: 0x%x", $status ) )
                     unless $status_name;
 
                 # Real-Time messages can appear inside other messages.
@@ -113,7 +113,7 @@ class MIDI::Stream::Parser {
 
                 # End-of-Xclusive
                 if ( $status_name eq 'eox' ) {
-                    $self->throw( "EOX received for non-SysEx message")
+                    $self->_w( "EOX received for non-SysEx message - ignoring!") && next BYTE
                         unless $pending_event[0] eq 'sysex';
                     $self->_push_event;
                     @pending_event = ();
@@ -163,8 +163,8 @@ class MIDI::Stream::Parser {
         join '', map { $self->single_event( $_ ) } @events;
     }
 
-    method throw( $e ) {
-        $error_cb->( $e );
+    method _w( $msg ) {
+        $warn_cb->( $msg );
     }
 
     method continue { 'continue' }
