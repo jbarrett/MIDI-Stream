@@ -14,11 +14,11 @@ class MIDI::Stream::Parser {
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
     use MIDI::Stream::Tables ':all';
+    use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
     use namespace::autoclean;
 
     field $zero_index_channel  :param = 1;
-    field $sysex_as_string     :param = 1;
     field $detect_note_off     :param = 1;
     field $retain_events       :param = 1;
 
@@ -35,10 +35,10 @@ class MIDI::Stream::Parser {
     field @events;
     field @pending_event;
     field $events_queued = 0;
-
+    field $message_length;
 
     method attach_callback( $event, $callback ) {
-        if ( reftype $event eq 'ARRAY' ) {
+        if ( reftype $event equ 'ARRAY' ) {
             $self->attach_callback( $_, $callback ) for $event->@*;
             return;
         }
@@ -57,33 +57,34 @@ class MIDI::Stream::Parser {
     method _push_event( $event = undef ) {
         state $t = [ gettimeofday ];
         $event //= [ @pending_event ];
-        $events_queued = 1;
+        my $stream_event = MIDI::Stream::Event->event( $event );
 
-        # note on with velocity 0 is note off
-        $event->[0] = 'note_off'
-            if ( $detect_note_off && $event->[0] eq 'note_on' && $event->[3] == 0 );
-
-        if ( $event->[0] eq 'sysex' && $sysex_as_string ) {
-            $event = [
-                sysex =>
-                join '',
-                map { chr } @pending_event[ 1 .. $#pending_event ]
-            ];
+        if ( !$stream_event ) {
+            $self->_w( "Ignoring unknown status $event->[0]" );
+            return;
         }
 
-        push @events, $event if $retain_events;
+        $events_queued = 1;
+
+        push @events, $stream_event if $retain_events;
 
         my $dt = tv_interval( $t );
         $t = [ gettimeofday ];
 
         my @callbacks = ( $filter_cb->{ all } // [] )->@*;
-        push @callbacks, ( $filter_cb->{ $event->[0] } // [] )->@*;
+        push @callbacks, ( $filter_cb->{ $stream_event->name } // [] )->@*;
 
         for my $cb ( @callbacks ) {
-            last unless $cb->( $name, $dt, $event ) equ $self->continue;
+            last unless $cb->( $dt, $stream_event ) equ $self->continue;
         }
 
-        $event_cb->( $event );
+        $event_cb->( $stream_event );
+    }
+
+    method _reset_pending_event( $status = undef ) {
+        @pending_event = ();
+        push @pending_event, $status if defined $status;
+        $message_length = message_length( $status );
     }
 
     method parse( $bytestring ) {
@@ -94,65 +95,49 @@ class MIDI::Stream::Parser {
         while ( @bytes ) {
 
             # Status byte - start/end of message
-            if ( is_status_byte( $bytes[0] ) ) {
+            if ( $bytes[0] & 0x80 ) {
                 my $status = shift @bytes;
-                my $status_name = status_name( $status );
 
-                $self->_w( sprintf( "Unsupported status type: 0x%x", $status ) )
-                    unless $status_name;
-
-                # Real-Time messages can appear inside other messages.
-                # Let's just propagate all one-byte statuses as if
-                # they were realtime. This is out of spec, but doesn't
-                # have any weird side-effects I can think of right now.
-                # (Maybe it screws with running status?)
-                if ( message_length( $status ) == 1 ) {
-                    $self->_push_event( [ $status_name ] );
+                # End-of-Xclusive
+                if ( $status == 0xf7 ) {
+                    $self->_w( "EOX received for non-SysEx message - ignoring!") && next BYTE
+                        unless $pending_event[0] == 0xf0;
+                    $self->_push_event;
+                    $self->_reset_pending_event;
                     next BYTE;
                 }
 
-                # End-of-Xclusive
-                if ( $status_name eq 'eox' ) {
-                    $self->_w( "EOX received for non-SysEx message - ignoring!") && next BYTE
-                        unless $pending_event[0] eq 'sysex';
-                    $self->_push_event;
-                    @pending_event = ();
+                # Real-Time messages can appear within other messages.
+                if ( is_realtime( $status ) ) {
+                    $self->_push_event( [ $status ] );
                     next BYTE;
                 }
 
                 # Any non-Real-Time status byte ends a SysEx
                 # Push the sysex and proceed ...
-                if ( $pending_event[0] equ 'sysex' ) {
+                if ( @pending_event && $pending_event[0] == 0xf0 ) {
                     $self->_push_event;
-                    @pending_event = ();
                 }
 
-                @pending_event = ( $status_name );
-
-                # Push channel if required
-                if ( has_channel( $status ) ) {
-                    my $channel = $status & 0x0f;
-                    $channel++ unless $zero_index_channel;
-                    push @pending_event, $channel + !$zero_index_channel;
+                # Should now be able to push any single-byte statuses,
+                # e.g. Tune request
+                if ( message_length( $status ) == 1 ) {
+                    $self->_push_event( [ $status ] );
+                    next BYTE;
                 }
 
+                $self->_reset_pending_event( $status );
                 next BYTE;
             } # end if status byte
+            next BYTE unless @pending_event;
 
             push @pending_event, shift @bytes;
-
-            my $message_length = message_length( $pending_event[0] );
             my $remaining = $message_length - @pending_event;
 
             # A complete message denoted by length, not upcoming status bytes
             if ( $message_length && $remaining <= 0 ) {
                 $self->_push_event;
-
-                # Upcoming messages may include running status -
-                # Status is not retransmitted if it's the same as prev. msg
-                @pending_event = has_channel( status_byte( $pending_event[0] ) )
-                    ? @pending_event[ 0, 1 ]
-                    : $pending_event[ 0 ]
+                $self->_reset_pending_event( $pending_event[0] );
             }
         } # end while
 
