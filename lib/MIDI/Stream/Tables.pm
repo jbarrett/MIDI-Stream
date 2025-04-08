@@ -10,13 +10,13 @@ use List::Util qw/ first /;
 use Scalar::Util qw/ looks_like_number /;
 
 my %status = (
-    note_off            => 0x80,
-    note_on             => 0x90,
-    key_after_touch     => 0xa0,
-    control_change      => 0xb0,
-    patch_change        => 0xc0,
-    channel_after_touch => 0xd0,
-    pitch_wheel_change  => 0xe0,
+    note_off       => 0x80,
+    note_on        => 0x90,
+    polytouch      => 0xa0,
+    control_change => 0xb0,
+    program_change => 0xc0,
+    aftertouch     => 0xd0,
+    pitchwheel     => 0xe0,
 );
 
 my %name = reverse %status;
@@ -53,21 +53,16 @@ sub status_byte {
 sub status_chr { chr status_byte( @_ ) }
 
 sub is_realtime {
-    my ( $status ) = @_;
-    $status = status_name( $status ) if looks_like_number( $status );
-    # is this really faster than the equivalent grep? Or a hash lookup?
-    first { $status eq $_ } qw/ clock start stop continue /
+    shift > 0xf7
 }
 
-# includes channel as a byte
 sub message_length {
     my ( $status ) = @_;
-    $status = status_byte( $status ) if !looks_like_number( $status );
 
     return 0 if $status < 0x80;
-    return 4 if $status < 0xc0;
-    return 3 if $status < 0xe0;
-    return 4 if $status < 0xf0;
+    return 3 if $status < 0xc0;
+    return 2 if $status < 0xe0;
+    return 3 if $status < 0xf0;
 
     return 0 if $status == 0xf0;
     return 2 if $status == 0xf1;
@@ -84,6 +79,7 @@ our @EXPORT_OK = qw/
     status_name
     status_byte
     status_chr
+    is_realtime
     message_length
     is_status_byte
     has_channel
