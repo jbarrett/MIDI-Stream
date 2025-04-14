@@ -32,6 +32,9 @@ class MIDI::Stream::Parser {
 
     field $name :reader :param = 'midi_stream:' . gettimeofday;
 
+    field $clock_samples :param = 24;
+    field $clock_fifo = MIDI::Stream::FIFO->new( length = $clock_samples );
+
     field @events;
     field @pending_event;
     field $events_queued = 0;
@@ -54,9 +57,20 @@ class MIDI::Stream::Parser {
 
     # TODO: Lexical-scope-ise these when feature available
 
+    method _sample_clock() {
+        state $t = [ gettimeofday ];
+        $clock_fifo->add( tv_interval( $t ) );
+        $t = [ gettimeofday ];
+    }
+
     method _push_event( $event = undef ) {
         state $t = [ gettimeofday ];
         $event //= [ @pending_event ];
+        my $dt = tv_interval( $t );
+        $t = [ gettimeofday ];
+
+        $event[0] == 0xf8 && $self->_sample_clock;
+
         my $stream_event = MIDI::Stream::Event->event( $event );
 
         if ( !$stream_event ) {
@@ -67,9 +81,6 @@ class MIDI::Stream::Parser {
         $events_queued = 1;
 
         push @events, $stream_event if $retain_events;
-
-        my $dt = tv_interval( $t );
-        $t = [ gettimeofday ];
 
         my @callbacks = ( $filter_cb->{ all } // [] )->@*;
         push @callbacks, ( $filter_cb->{ $stream_event->name } // [] )->@*;
@@ -85,6 +96,10 @@ class MIDI::Stream::Parser {
         @pending_event = ();
         push @pending_event, $status if defined $status;
         $message_length = message_length( $status );
+    }
+
+    method bpm {
+        60 / ( $clock_fifo->average * 24 );
     }
 
     method parse( $bytestring ) {
