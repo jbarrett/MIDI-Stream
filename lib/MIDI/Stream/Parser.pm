@@ -13,6 +13,7 @@ class MIDI::Stream::Parser {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
+    use Math::Round qw/ round /;
     use MIDI::Stream::Tables ':all';
     use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
@@ -34,6 +35,7 @@ class MIDI::Stream::Parser {
 
     field $clock_samples :param = 24;
     field $clock_fifo = MIDI::Stream::FIFO->new( length = $clock_samples );
+    field $round_bpm :param = 0;
 
     field @events;
     field @pending_event;
@@ -69,8 +71,6 @@ class MIDI::Stream::Parser {
         my $dt = tv_interval( $t );
         $t = [ gettimeofday ];
 
-        $event[0] == 0xf8 && $self->_sample_clock;
-
         my $stream_event = MIDI::Stream::Event->event( $event );
 
         if ( !$stream_event ) {
@@ -98,10 +98,6 @@ class MIDI::Stream::Parser {
         $message_length = message_length( $status );
     }
 
-    method bpm {
-        60 / ( $clock_fifo->average * 24 );
-    }
-
     method parse( $bytestring ) {
         my @bytes = unpack 'C*', $bytestring;
         my $status;
@@ -112,6 +108,9 @@ class MIDI::Stream::Parser {
             # Status byte - start/end of message
             if ( $bytes[0] & 0x80 ) {
                 my $status = shift @bytes;
+
+                # Sample the clock to determine BPM ASAP
+                $status == 0xf8 && $self->_sample_clock;
 
                 # End-of-Xclusive
                 if ( $status == 0xf7 ) {
@@ -157,6 +156,11 @@ class MIDI::Stream::Parser {
         } # end while
 
         $events_queued;
+    }
+
+    method bpm {
+        my $bpm = 60 / ( $clock_fifo->average * 24 );
+        $round_bpm ? round( $bpm ) : $bpm;
     }
 
     method encode_events( @events ) {
