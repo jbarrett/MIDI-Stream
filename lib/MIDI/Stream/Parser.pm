@@ -35,7 +35,7 @@ class MIDI::Stream::Parser {
 
     field $clock_samples :param = 24;
     field $clock_fifo = MIDI::Stream::FIFO->new( length = $clock_samples );
-    field $round_bpm :param = 0;
+    field $round_tempo :param = 0;
 
     field @events;
     field @pending_event;
@@ -109,7 +109,7 @@ class MIDI::Stream::Parser {
             if ( $bytes[0] & 0x80 ) {
                 my $status = shift @bytes;
 
-                # Sample the clock to determine BPM ASAP
+                # Sample the clock to determine tempo ASAP
                 $status == 0xf8 && $self->_sample_clock;
 
                 # End-of-Xclusive
@@ -158,9 +158,9 @@ class MIDI::Stream::Parser {
         $events_queued;
     }
 
-    method bpm {
-        my $bpm = 60 / ( $clock_fifo->average * 24 );
-        $round_bpm ? round( $bpm ) : $bpm;
+    method tempo {
+        my $tempo = 60 / ( $clock_fifo->average * 24 );
+        $round_tempo ? round( $tempo ) : $tempo;
     }
 
     method encode_events( @events ) {
