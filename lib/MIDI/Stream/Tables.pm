@@ -77,6 +77,20 @@ sub message_length {
 sub is_status_byte { $_[0] & 0x80 }
 sub has_channel { $_[0] < 0xf0 }
 
+sub is_cc {
+    return if $_[0] < 0xb0 || $_[0] > 0xbf; 1;
+}
+
+sub combine_bytes {
+    my ( $msb, $lsb ) = @_;
+    $msb << 7 | $lsb & 0x7f;
+}
+
+sub split_bytes {
+    my ( $value ) = @_;
+    ( $value >> 7 & 0x7f, $value & 0x7f );
+}
+
 use constant {
     map { $_ => $_ } ( keys %fstatus, keys %status )
 };
@@ -89,6 +103,9 @@ our @EXPORT_OK = qw/
     message_length
     is_status_byte
     has_channel
+    is_cc
+    combine_bytes
+    split_bytes
 /;
 push @EXPORT_OK, keys %status, keys %fstatus;
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
