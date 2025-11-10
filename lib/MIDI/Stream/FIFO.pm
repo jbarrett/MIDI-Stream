@@ -9,6 +9,7 @@ use Feature::Compat::Class;
 
 class MIDI::Stream::FIFO {
     use List::Util qw/ reduce /;
+    use namespace::autoclean;
 
     field $length :param = 24;
     field $members = [];
