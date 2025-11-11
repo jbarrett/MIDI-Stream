@@ -183,7 +183,7 @@ class MIDI::Stream::Parser {
     }
 
     method tempo {
-        my $tempo = 60 / ( $clock_fifo->average * 24 );
+        my $tempo = 60 / ( $clock_fifo->average * $clock_samples );
         $round_tempo ? sprintf( '%.0f', $tempo ) : $tempo;
     }
 
