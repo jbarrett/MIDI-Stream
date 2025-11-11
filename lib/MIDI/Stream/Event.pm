@@ -45,12 +45,12 @@ class MIDI::Stream::Event {
         return instance() if $status > 0xf7;
 
         # Channel events
-        return instance( 'Note' )       if $status < 0xa0;
-        return instance( 'PolyTouch' )  if $status < 0xb0;
-        return instance( 'CC' )         if $status < 0xc0;
-        return instance( 'Program' )    if $status < 0xd0;
-        return instance( 'AfterTouch' ) if $status < 0xe0;
-        return instance( 'PitchWheel' ) if $status < 0xf0;
+        return instance( 'Note' )           if $status < 0xa0;
+        return instance( 'PolyTouch' )      if $status < 0xb0;
+        return instance( 'ControlChange' )  if $status < 0xc0;
+        return instance( 'ProgramChange' )  if $status < 0xd0;
+        return instance( 'AfterTouch' )     if $status < 0xe0;
+        return instance( 'PitchBend' )      if $status < 0xf0;
     }
 
     ADJUST {
