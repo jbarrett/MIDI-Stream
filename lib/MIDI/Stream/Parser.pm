@@ -23,9 +23,12 @@ class MIDI::Stream::Parser {
     field $detect_note_off     :param = 1;
     field $retain_events       :param = 1;
 
-    field $mode_14bit :param = 0;
-    field $mode_rpn   :param = $mode_14bit;
-    field $mode_nrpn  :param = $mode_14bit;
+    field $enable_14bit :param = 0;
+    field $enable_rpn   :param = 0;
+    field $enable_nrpn  :param = 0;
+    field $last_msb     = [];
+    field $active_rpn;
+    field $active_nrpn;
 
     field $warn_cb :param = sub { carp( @_ ); };
     field $event_cb :param = sub { @_ };
@@ -42,6 +45,8 @@ class MIDI::Stream::Parser {
     field $events_queued = 0;
     field $message_length;
 
+    field @cc;
+
     method attach_callback( $event, $callback ) {
         if ( reftype $event equ 'ARRAY' ) {
             $self->attach_callback( $_, $callback ) for $event->@*;
@@ -57,7 +62,22 @@ class MIDI::Stream::Parser {
         @return_events;
     }
 
-    # TODO: Lexical-scope-ise these when feature available
+    my method _expand_cc( $event ) {
+        return $event unless is_cc( $event->[ 0 ] );
+        return $event unless $enable_14bit;
+        return $event if $event->[ 1 ] > 0x40;
+        return $event if $event->[ 2 ] > 0x7f;
+
+        if ( $event->[ 1 ] & 0x20 ) {
+            my $msb = $cc[ $event->[ 1 ] & ~0x20 ];
+            return unless defined $msb;
+            $event->[ 2 ] = combine_bytes( $msb, $event->[ 2 ] );
+            return $event;
+        }
+
+         $cc[ $event->[ 1 ] ] = $event->[ 2 ];
+         return;
+    }
 
     method _sample_clock() {
         state $t = [ gettimeofday ];
@@ -67,7 +87,9 @@ class MIDI::Stream::Parser {
 
     method _push_event( $event = undef ) {
         state $t = [ gettimeofday ];
-        $event //= [ @pending_event ];
+        $event //= [ @pending_event ]; # Do not use a reference to @pending_event, contents may change
+        $event = $self->&_expand_cc( $event );
+        return unless $event;
         my $dt = tv_interval( $t );
         $t = [ gettimeofday ];
 
@@ -78,7 +100,7 @@ class MIDI::Stream::Parser {
             return;
         }
 
-        $events_queued = 1;
+        $events_queued++;
 
         push @events, $stream_event if $retain_events;
 
