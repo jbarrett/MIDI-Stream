@@ -85,7 +85,7 @@ class MIDI::Stream::Parser {
         $t = [ gettimeofday ];
     }
 
-    method _push_event( $event = undef ) {
+    my method _push_event( $event = undef ) {
         state $t = [ gettimeofday ];
         $event //= [ @pending_event ]; # Do not use a reference to @pending_event, contents may change
         $event = $self->&_expand_cc( $event );
@@ -96,7 +96,7 @@ class MIDI::Stream::Parser {
         my $stream_event = MIDI::Stream::Event->event( $event );
 
         if ( !$stream_event ) {
-            $self->_w( "Ignoring unknown status $event->[0]" );
+            $self->&_warn( "Ignoring unknown status $event->[0]" );
             return;
         }
 
@@ -114,7 +114,7 @@ class MIDI::Stream::Parser {
         $event_cb->( $stream_event );
     }
 
-    method _reset_pending_event( $status = undef ) {
+    my method _reset_pending_event( $status = undef ) {
         @pending_event = ();
         push @pending_event, $status if defined $status;
         $message_length = message_length( $status );
@@ -132,48 +132,50 @@ class MIDI::Stream::Parser {
                 my $status = shift @bytes;
 
                 # Sample the clock to determine tempo ASAP
-                $status == 0xf8 && $self->_sample_clock;
+                $status == 0xf8 && $self->&_sample_clock;
 
                 # End-of-Xclusive
                 if ( $status == 0xf7 ) {
-                    $self->_w( "EOX received for non-SysEx message - ignoring!") && next BYTE
+                    $self->&_warn( "EOX received for non-SysEx message - ignoring!") && next BYTE
                         unless $pending_event[0] == 0xf0;
-                    $self->_push_event;
-                    $self->_reset_pending_event;
+                    $self->&_push_event;
+                    $self->&_reset_pending_event;
                     next BYTE;
                 }
 
                 # Real-Time messages can appear within other messages.
                 if ( is_realtime( $status ) ) {
-                    $self->_push_event( [ $status ] );
+                    $self->&_push_event( [ $status ] );
                     next BYTE;
                 }
 
                 # Any non-Real-Time status byte ends a SysEx
                 # Push the sysex and proceed ...
                 if ( @pending_event && $pending_event[0] == 0xf0 ) {
-                    $self->_push_event;
+                    $self->&_push_event;
                 }
 
                 # Should now be able to push any single-byte statuses,
                 # e.g. Tune request
                 if ( message_length( $status ) == 1 ) {
-                    $self->_push_event( [ $status ] );
+                    $self->&_push_event( [ $status ] );
                     next BYTE;
                 }
 
-                $self->_reset_pending_event( $status );
+                $self->&_reset_pending_event( $status );
                 next BYTE;
             } # end if status byte
+
+            my $byte = shift @bytes;
             next BYTE unless @pending_event;
 
-            push @pending_event, shift @bytes;
+            push @pending_event, $byte;
             my $remaining = $message_length - @pending_event;
 
             # A complete message denoted by length, not upcoming status bytes
             if ( $message_length && $remaining <= 0 ) {
-                $self->_push_event;
-                $self->_reset_pending_event( $pending_event[0] );
+                $self->&_push_event;
+                $self->&_reset_pending_event( $pending_event[0] );
             }
         } # end while
 
@@ -189,12 +191,12 @@ class MIDI::Stream::Parser {
         join '', map { $self->single_event( $_ ) } @events;
     }
 
-    method _w( $msg ) {
+    my method _warn( $msg ) {
         $warn_cb->( $msg );
     }
 
-    method continue { 'continue' }
-    method stop { 'stop' }
+    method continue { MIDI::Stream::Tables::continue() }
+    method stop { MIDI::Stream::Tables::stop() }
 }
 
 1;
