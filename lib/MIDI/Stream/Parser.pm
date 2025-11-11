@@ -13,8 +13,8 @@ class MIDI::Stream::Parser {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
-    use Math::Round qw/ round /;
-    use MIDI::Stream::Tables ':all';
+    use MIDI::Stream::Tables qw/ is_cc is_realtime message_length /;
+    use MIDI::Stream::FIFO;
     use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
     use namespace::autoclean;
@@ -37,7 +37,7 @@ class MIDI::Stream::Parser {
     field $name :reader :param = 'midi_stream:' . gettimeofday;
 
     field $clock_samples :param = 24;
-    field $clock_fifo = MIDI::Stream::FIFO->new( length = $clock_samples );
+    field $clock_fifo = MIDI::Stream::FIFO->new( length => $clock_samples );
     field $round_tempo :param = 0;
 
     field @events;
@@ -79,7 +79,7 @@ class MIDI::Stream::Parser {
          return;
     }
 
-    method _sample_clock() {
+    my method _sample_clock() {
         state $t = [ gettimeofday ];
         $clock_fifo->add( tv_interval( $t ) );
         $t = [ gettimeofday ];
@@ -182,7 +182,7 @@ class MIDI::Stream::Parser {
 
     method tempo {
         my $tempo = 60 / ( $clock_fifo->average * 24 );
-        $round_tempo ? round( $tempo ) : $tempo;
+        $round_tempo ? sprintf( '%.0f', $tempo ) : $tempo;
     }
 
     method encode_events( @events ) {
