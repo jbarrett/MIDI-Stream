@@ -18,7 +18,7 @@ BEGIN {
         control_change => 0xb0,
         program_change => 0xc0,
         aftertouch     => 0xd0,
-        pitchwheel     => 0xe0,
+        pitch_bend     => 0xe0,
     );
 
     %fstatus = (
@@ -40,6 +40,20 @@ BEGIN {
 my %name = reverse %status;
 my %fname = reverse %fstatus;
 
+my $event_keys = {
+    note_off       => [qw/ channel note velocity /],
+    note_on        => [qw/ channel note velocity /],
+    polytouch      => [qw/ channel note pressure /],
+    control_change => [qw/ channel control value /],
+    program_change => [qw/ program /],
+    aftertouch     => [qw/ channel pressure /],
+    pitch_bend     => [qw/ channel value /]
+};
+
+sub keys_for {
+    $event_keys->{ $_[0] } // [];
+}
+
 sub status_name {
     $name{ $_[0] & 0xf0 } // $fname{ $_[0] };
 }
@@ -52,11 +66,13 @@ sub status_byte {
     $byte;
 }
 
+sub plain_status_byte { $status{ $_[0] } }
+
 sub status_chr { chr status_byte( @_ ) }
 
-sub is_realtime {
-    shift > 0xf7
-}
+sub is_realtime { $_[0] > 0xf7 }
+
+sub is_single_byte { $_[0] > 0xf5 }
 
 sub message_length {
     my ( $status ) = @_;
@@ -75,6 +91,7 @@ sub message_length {
 }
 
 sub is_status_byte { $_[0] & 0x80 }
+
 sub has_channel { $_[0] < 0xf0 }
 
 sub is_cc {
@@ -96,10 +113,13 @@ use constant {
 };
 
 our @EXPORT_OK = qw/
+    keys_for
     status_name
     status_byte
+    plain_status_byte
     status_chr
     is_realtime
+    is_single_byte
     message_length
     is_status_byte
     has_channel
