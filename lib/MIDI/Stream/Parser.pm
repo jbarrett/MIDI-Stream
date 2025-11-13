@@ -9,7 +9,7 @@ our @CARP_NOT = (__PACKAGE__);
 
 use Feature::Compat::Class;
 
-class MIDI::Stream::Parser {
+class MIDI::Stream::Parser :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
@@ -33,8 +33,6 @@ class MIDI::Stream::Parser {
     field $warn_cb :param = sub { carp( @_ ); };
     field $event_cb :param = sub { @_ };
     field $filter_cb = {};
-
-    field $name :reader :param = 'midi_stream:' . gettimeofday;
 
     field $clock_samples :param = 24;
     field $clock_fifo = MIDI::Stream::FIFO->new( length => $clock_samples );
@@ -194,9 +192,6 @@ class MIDI::Stream::Parser {
     my method _warn( $msg ) {
         $warn_cb->( $msg );
     }
-
-    method continue { MIDI::Stream::Tables::continue() }
-    method stop { MIDI::Stream::Tables::stop() }
 }
 
 1;
