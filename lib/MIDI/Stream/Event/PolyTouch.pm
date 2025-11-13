@@ -17,13 +17,6 @@ class MIDI::Stream::Event::PolyTouch
         $note = $self->message->[ 1 ];
         $pressure = $self->message->[ 2 ];
     }
-
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                qw/ name channel note pressure /
-        };
-    }
 }
 
 1;

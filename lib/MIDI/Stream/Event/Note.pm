@@ -20,12 +20,6 @@ class MIDI::Stream::Event::Note
         $velocity = $self->message->[2];
     }
 
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                qw/ name channel note velocity /
-        };
-    }
 }
 
 1;

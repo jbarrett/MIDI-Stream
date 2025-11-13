@@ -17,12 +17,6 @@ class MIDI::Stream::Event::AfterTouch
         $pressure = $self->message->[ 1 ];
     }
 
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                qw/ name channel pressure /
-        };
-    }
 }
 
 1;

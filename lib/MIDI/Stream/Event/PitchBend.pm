@@ -16,13 +16,6 @@ class MIDI::Stream::Event::PitchBend
     ADJUST {
         $value = combine_bytes( $self->message->@[ 2, 1 ] );
     }
-
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                qw/ name channel value /
-        };
-    }
 }
 
 1;

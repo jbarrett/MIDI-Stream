@@ -15,13 +15,6 @@ class MIDI::Stream::Event::ProgramChange
     ADJUST {
         $program = $self->message->[1];
     }
-
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                qw/ name channel program /
-        };
-    }
 }
 
 1;

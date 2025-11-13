@@ -14,7 +14,7 @@ package MIDI::Stream::Event;
 
 class MIDI::Stream::Event {
     use Carp qw/ croak /;
-    use MIDI::Stream::Tables qw/ status_name /;
+    use MIDI::Stream::Tables qw/ status_name keys_for /;
     use Module::Load;
     use namespace::autoclean;
 
@@ -51,6 +51,13 @@ class MIDI::Stream::Event {
         return instance( 'ProgramChange' )  if $status < 0xd0;
         return instance( 'AfterTouch' )     if $status < 0xe0;
         return instance( 'PitchBend' )      if $status < 0xf0;
+    }
+
+    method TO_JSON {
+        +{
+            map { $_ => $self->$_ }
+                ( 'name', keys_for( $self->name )->@* )
+        };
     }
 
     ADJUST {
