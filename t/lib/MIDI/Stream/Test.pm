@@ -63,14 +63,14 @@ sub random_chunks {
     @chunks;
 }
 
-sub run_encoding_tests( $data ) {
+sub run_encoding_tests( $data, $params = {} ) {
     require MIDI::Stream::Encoder;
     my $encoder = MIDI::Stream::Encoder->new;
     for my $test ( $data->{ tests }->@* ) {
     }
 }
 
-sub run_decoding_tests( $data ) {
+sub run_decoding_tests( $data, $params = {} ) {
     require MIDI::Stream::Decoder;
     my $decoder = MIDI::Stream::Decoder->new( $params->%* );
     for my $test ( $data->{ tests }->@* ) {
@@ -83,11 +83,11 @@ sub run_decoding_tests( $data ) {
 }
 
 sub run_file( $spec ) {
-    my ( $midi_version, $test_type, $file_spec ) = $spec->@{ qw/ midi_version test_type file_spec / };
+    my ( $midi_version, $test_type, $file_spec, $params ) = $spec->@{ qw/ midi_version test_type file_spec params / };
     my $data = test_data( qq{$test_data_dir/MIDI_$midi_version/$test_type/$file_spec} );
     my $run_tests = __PACKAGE__->can( qq(run_${test_type}_tests) );
 
-    $run_tests->( $_ ) for ref $data eq 'ARRAY'
+    $run_tests->( $_, $params ) for ref $data eq 'ARRAY'
         ? $data->@*
         : ( $data );
 }
