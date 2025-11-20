@@ -8,6 +8,5 @@ run_file({
    file_spec => '000_example.json'
 });
 
-ok(1);
 
 done_testing;
