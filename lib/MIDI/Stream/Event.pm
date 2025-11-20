@@ -27,10 +27,6 @@ class MIDI::Stream::Event {
         $bytes //= join '', map { chr } $message->@*;
     }
 
-    method TO_JSON {
-        +{ name => $name }
-    }
-
     sub event( $class, $message ) {
         my $status = $message->[0];
         return if $status < 0x80;
