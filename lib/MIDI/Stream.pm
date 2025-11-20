@@ -2,10 +2,7 @@ use strict;
 use warnings;
 package MIDI::Stream;
 
-#use MIDI::Stream::Parser;
-#use MIDI::Stream::Encoder;
-
-# ABSTRACT: MIDI bytestream parsing and encoding
+# ABSTRACT: MIDI bytestream decoding and encoding
 
 use v5.26;
 our @CARP_NOT = (__PACKAGE__);
@@ -30,7 +27,7 @@ __END__
 
 =head1 NAME
 
-MIDI::Stream - MIDI bytestream parsing and encoding
+MIDI::Stream - MIDI bytestream decoding and encoding
 
 =head1 VERSION
 

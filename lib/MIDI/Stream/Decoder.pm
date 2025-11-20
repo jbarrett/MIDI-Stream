@@ -1,15 +1,15 @@
 use strict;
 use warnings;
-package MIDI::Stream::Parser;
+package MIDI::Stream::Decoder;
 
-# ABSTRACT: MIDI bytestream parser
+# ABSTRACT: MIDI bytestream decoder
 
 use v5.26;
 our @CARP_NOT = (__PACKAGE__);
 
 use Feature::Compat::Class;
 
-class MIDI::Stream::Parser :isa( MIDI::Stream ) {
+class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
@@ -118,7 +118,7 @@ class MIDI::Stream::Parser :isa( MIDI::Stream ) {
         $message_length = message_length( $status );
     }
 
-    method parse( $bytestring ) {
+    method decode( $bytestring ) {
         my @bytes = unpack 'C*', $bytestring;
         my $status;
 

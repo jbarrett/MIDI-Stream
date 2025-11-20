@@ -71,10 +71,10 @@ sub run_encoding_tests( $data ) {
 }
 
 sub run_decoding_tests( $data ) {
-    require MIDI::Stream::Parser;
-    my $decoder = MIDI::Stream::Parser->new;
+    require MIDI::Stream::Decoder;
+    my $decoder = MIDI::Stream::Decoder->new( $params->%* );
     for my $test ( $data->{ tests }->@* ) {
-        $decoder->parse( decode_hex( $test->{ data } ) );
+        $decoder->decode( decode_hex( $test->{ data } ) );
         my @events = map {
             $_->TO_JSON
         } $decoder->events;
