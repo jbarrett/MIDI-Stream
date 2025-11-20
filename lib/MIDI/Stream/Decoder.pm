@@ -34,6 +34,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     field $event_cb :param = sub { @_ };
     field $filter_cb = {};
 
+    field $clock_ppqn :param = 24;
     field $clock_samples :param = 24;
     field $clock_fifo = MIDI::Stream::FIFO->new( length => $clock_samples );
     field $round_tempo :param = 0;
@@ -181,7 +182,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     }
 
     method tempo {
-        my $tempo = 60 / ( $clock_fifo->average * $clock_samples );
+        my $tempo = 60 / ( $clock_fifo->average * $clock_ppqn );
         $round_tempo ? sprintf( '%.0f', $tempo ) : $tempo;
     }
 
