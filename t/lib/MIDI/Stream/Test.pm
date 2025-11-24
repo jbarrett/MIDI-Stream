@@ -9,6 +9,9 @@ use v5.26;
 use Test2::V0;
 use FindBin;
 
+use MIDI::Stream::Encoder;
+use MIDI::Stream::Decoder;
+
 my $test_data_dir = "$FindBin::Bin/test_data/";
 
 BEGIN {
@@ -64,14 +67,12 @@ sub random_chunks {
 }
 
 sub run_encoding_tests( $data, $params = {} ) {
-    require MIDI::Stream::Encoder;
     my $encoder = MIDI::Stream::Encoder->new;
     for my $test ( $data->{ tests }->@* ) {
     }
 }
 
 sub run_decoding_tests( $data, $params = {} ) {
-    require MIDI::Stream::Decoder;
     my $decoder = MIDI::Stream::Decoder->new( $params->%* );
     for my $test ( $data->{ tests }->@* ) {
         $decoder->decode( decode_hex( $test->{ data } ) );

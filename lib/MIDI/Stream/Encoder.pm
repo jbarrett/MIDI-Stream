@@ -42,7 +42,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     my method _flatten( $event ) {
         my @keys = ( 'name', keys_for( $event->{ name } )->@* );
         my @e = $event->@{ @keys };
-        use DDP;  p @keys; p @e;
         [ $event->@{ @keys } ];
     }
 
@@ -70,7 +69,19 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     method encode( $event ) {
         $event = $self->&_flatten( $event )
             if ref $event eq 'HASH';
-        my @event = $event->@*;
+            my @event = $event->@*;
+
+        # Allow definition of multiple notes in note messages
+        if ( index( $event[0], 'note' ) == 0 && ref $event[2] eq 'ARRAY' ) {
+            my @vel = ref $event[3] eq 'ARRAY'
+                ? $event[3]->@*
+                : ( $event[3] ) x $event[2]->@*;
+
+            push @vel, ( $vel[-1] ) x ( $event[2]->@* - @vel )
+                if $event[2]->@* > @vel;
+
+            return join '', map { $self->encode( [ $event->@[ 0, 1 ], $_, shift @vel ] ) } $event[2]->@*;
+        }
 
         my $status = plain_status_byte( shift @event );
 
