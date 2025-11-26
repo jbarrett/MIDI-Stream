@@ -104,7 +104,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     }
 
     method encode_events( @events ) {
-        join '', map { $self->encode_event( $_ ) } @events;
+        join '', map { $self->encode( $_ ) } @events;
     }
 }
 
