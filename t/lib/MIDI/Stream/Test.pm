@@ -36,6 +36,10 @@ sub test_data( $file ) {
     }
 }
 
+sub encode_hex( $string ) {
+    join ' ', unpack '(H2)*', $string;
+}
+
 sub decode_hex( $string ) {
     pack 'H*', $string =~ y/ //dr;
 }
@@ -60,6 +64,8 @@ sub random_chunks {
 sub run_encoding_tests( $data, $params = {} ) {
     my $encoder = MIDI::Stream::Encoder->new;
     for my $test ( $data->{ tests }->@* ) {
+        my $midi = $encoder->encode_events( $test->{ data }->@* );
+        is( encode_hex( $midi ), $test->{expect}, "$test->{description}" );
     }
 }
 
