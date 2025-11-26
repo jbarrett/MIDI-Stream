@@ -29,15 +29,6 @@ use parent 'Exporter';
 
 
 sub test_data( $file ) {
-    if ( !-f $file ) {
-        return [
-            map {
-                test_data( $_ )
-            }
-            glob $file
-        ]
-    }
-
     decode_json do {
         open my $fh, '<', $file or die "Can't open $file: $!";
         local $/ = undef;
@@ -84,13 +75,12 @@ sub run_decoding_tests( $data, $params = {} ) {
 }
 
 sub run_file( $spec ) {
-    my ( $midi_version, $test_type, $file_spec, $params ) = $spec->@{ qw/ midi_version test_type file_spec params / };
-    my $data = test_data( qq{$test_data_dir/MIDI_$midi_version/$test_type/$file_spec} );
+    my ( $midi_version, $test_type, $filename, $params ) = $spec->@{ qw/ midi_version test_type filename params / };
+    $midi_version //= 1;
+    my $data = test_data( qq{$test_data_dir/MIDI_$midi_version/$test_type/$filename} );
     my $run_tests = __PACKAGE__->can( qq(run_${test_type}_tests) );
 
-    $run_tests->( $_, $params ) for ref $data eq 'ARRAY'
-        ? $data->@*
-        : ( $data );
+    $run_tests->( $data, $params );
 }
 
 our @EXPORT_OK = qw/

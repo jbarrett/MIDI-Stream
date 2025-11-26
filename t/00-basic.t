@@ -3,9 +3,13 @@ use Test::Lib;
 use MIDI::Stream::Test 'run_file';
 
 run_file({
-   midi_version => 1,
    test_type => 'decoding',
-   file_spec => '000_example.json'
+   filename  => '000_example.json'
+});
+
+run_file({
+   test_type => 'encoding',
+   filename  => '000_example.json'
 });
 
 
