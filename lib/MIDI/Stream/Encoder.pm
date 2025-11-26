@@ -90,6 +90,8 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         # 'Note on' with velocity 0 is treated as 'Note off'.
         # Strings of 'Note on' events can take better advantage of
         # running-status.
+        # TODO: Should the status be changed if the current running
+        # status is 0x8n?
         $status |= 0x10 if ( $status == 0x80 && !$event[ -1 ] );
 
         $status |= shift @event & 0xf if has_channel( $status );
