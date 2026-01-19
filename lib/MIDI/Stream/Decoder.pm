@@ -1,13 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Decoder;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI bytestream decoder
-
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
-
-use Feature::Compat::Class;
 
 class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;

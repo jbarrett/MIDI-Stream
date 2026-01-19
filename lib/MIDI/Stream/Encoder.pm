@@ -1,13 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Encoder;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI event to bytestream encoder
-
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
-
-use Feature::Compat::Class;
 
 class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     use Time::HiRes qw/ gettimeofday tv_interval /;
