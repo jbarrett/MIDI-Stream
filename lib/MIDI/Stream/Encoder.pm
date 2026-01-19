@@ -76,7 +76,12 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
             return join '', map { $self->encode( [ $event->@[ 0, 1 ], $_, shift @vel ] ) } $event[2]->@*;
         }
 
+        my $event_name = shift @event;
         my $status = plain_status_byte( shift @event );
+        if ( ! $status ) {
+            carp "Ignoring unknown status : $event_name";
+            return;
+        }
 
         # 'Note off' events with velocity should retain their status,
         # and set running-status accordingly.
