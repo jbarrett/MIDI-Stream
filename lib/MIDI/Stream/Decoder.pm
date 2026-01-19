@@ -19,11 +19,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     field $retain_events       :param = 1;
 
     field $enable_14bit :param = 0;
-    field $enable_rpn   :param = 0;
-    field $enable_nrpn  :param = 0;
-    field $last_msb     = [];
-    field $active_rpn;
-    field $active_nrpn;
+    field @cc;
 
     field $warn_cb :param = sub { carp( @_ ); };
     field $event_cb :param = sub { @_ };
@@ -38,8 +34,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     field @pending_event;
     field $events_queued = 0;
     field $message_length;
-
-    field @cc;
 
     method attach_callback( $event, $callback ) {
         if ( reftype $event equ 'ARRAY' ) {

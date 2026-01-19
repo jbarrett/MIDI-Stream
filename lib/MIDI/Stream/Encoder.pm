@@ -19,8 +19,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $sysex_f0_terminates :param = 1;
 
     field $enable_14bit :param = 0;
-    field $enable_rpn   :param = 0;
-    field $enable_nrpn  :param = 0;
     field $enable_running_status :param = 1;
 
     field $running_status = 0;
