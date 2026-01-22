@@ -66,7 +66,7 @@ sub status_byte {
     $byte;
 }
 
-sub plain_status_byte { $status{ $_[0] } }
+sub plain_status_byte { $status{ $_[0] } // $fstatus{ $_[0] } }
 
 sub status_chr { chr status_byte( @_ ) }
 
