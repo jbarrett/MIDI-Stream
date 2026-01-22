@@ -49,11 +49,20 @@ class MIDI::Stream::Event {
         return instance( 'PitchBend' )      if $status < 0xf0;
     }
 
-    method TO_JSON {
+    method as_hashref {
         +{
             map { $_ => $self->$_ }
                 ( 'name', keys_for( $self->name )->@* )
         };
+    }
+
+    method TO_JSON { $self->as_hashref };
+
+    method as_arrayref {
+        [
+            $self->name =>
+            map { $self->$_ } keys_for( $self->name )->@*
+        ]
     }
 
     ADJUST {
