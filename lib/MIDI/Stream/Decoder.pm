@@ -8,7 +8,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
-    use MIDI::Stream::Tables qw/ is_cc is_realtime message_length /;
+    use MIDI::Stream::Tables qw/ is_cc is_realtime is_pitch_bend message_length /;
     use MIDI::Stream::FIFO;
     use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
@@ -32,7 +32,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
     field @events;
     field @pending_event;
-    field $events_queued = 0;
     field $message_length;
 
     method attach_callback( $event, $callback ) {
@@ -44,10 +43,11 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     }
 
     method events {
-        my @return_events = @events;
-        @events = ();
-        $events_queued = 0;
-        @return_events;
+        splice @events;
+    }
+
+    method fetch_one_event {
+        pop @events;
     }
 
     my method _expand_cc( $event ) {
@@ -87,8 +87,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
             $self->&_warn( "Ignoring unknown status $event->[0]" );
             return;
         }
-
-        $events_queued++;
 
         push @events, $stream_event if $retain_events;
 
@@ -167,7 +165,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
             }
         } # end while
 
-        $events_queued;
+        scalar @events;
     }
 
     method tempo {
