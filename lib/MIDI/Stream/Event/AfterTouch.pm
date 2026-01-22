@@ -14,7 +14,7 @@ class MIDI::Stream::Event::AfterTouch
     field $pressure :reader;
 
     ADJUST {
-        $pressure = $self->message->[ 1 ];
+        $pressure = $self->message->[ 2 ];
     }
 
 }
