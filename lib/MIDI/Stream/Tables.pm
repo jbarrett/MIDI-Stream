@@ -99,13 +99,13 @@ sub is_cc {
 }
 
 sub combine_bytes {
-    my ( $msb, $lsb ) = @_;
+    my ( $lsb, $msb ) = @_;
     $msb << 7 | $lsb & 0x7f;
 }
 
 sub split_bytes {
     my ( $value ) = @_;
-    ( $value >> 7 & 0x7f, $value & 0x7f );
+    ( $value & 0x7f, $value >> 7 & 0x7f );
 }
 
 use constant {

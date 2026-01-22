@@ -14,7 +14,7 @@ class MIDI::Stream::Event::PitchBend
     field $value :reader;
 
     ADJUST {
-        $value = combine_bytes( $self->message->@[ 2, 1 ] );
+        $value = combine_bytes( $self->message->@[ 1, 2 ] );
     }
 }
 
