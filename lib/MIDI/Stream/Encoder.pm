@@ -9,7 +9,8 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     use Carp qw/ carp croak /;
     use List::Util qw/ mesh /;
     use MIDI::Stream::Tables qw/
-        status_byte has_channel keys_for is_single_byte plain_status_byte
+        status_byte has_channel keys_for is_single_byte
+        plain_status_byte split_bytes
     /;
 
     use namespace::autoclean;
@@ -62,7 +63,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     method encode( $event ) {
         $event = $self->&_flatten( $event )
             if ref $event eq 'HASH';
-            my @event = $event->@*;
+        my @event = $event->@*;
 
         # Allow definition of multiple notes in note messages
         # $encoder->encode( [ note_on => 0, [ 67, 68, 69 ], [ 100, 70, 60 ] ] );
@@ -78,8 +79,24 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
             return join '', map { $self->encode( [ $event->@[ 0, 1 ], $_, shift @vel ] ) } $event[2]->@*;
         }
 
+        if ( $event[0] eq 'pitch_bend' ) {
+            splice @event, 2, 1, split_bytes( $event[2] );
+        }
+
+        if ( $event[0] eq 'sysex' || $event[0] eq 'sysex_str' ) {
+            my $msg = chr( 0xf0 ) . $event[1];
+            $msg .= substr( $event[1], -1 ) ne chr( 0xf7 )
+                ? chr( 0xf7 )
+                : '';
+            return $msg;
+        }
+
+        if ( $event[0] eq 'sysex_arr' ) {
+            push @event, 0xf7 unless $event[-1] == 0xf7;
+        }
+
         my $event_name = shift @event;
-        my $status = plain_status_byte( shift @event );
+        my $status = plain_status_byte( $event_name );
         if ( ! $status ) {
             carp "Ignoring unknown status : $event_name";
             return;
@@ -97,7 +114,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         $status |= shift @event & 0xf if has_channel( $status );
 
         $status = $self->&_running_status( $status );
-
         join '', map { chr } $status
             ? ( $status, @event )
             : @event

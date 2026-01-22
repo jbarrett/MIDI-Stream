@@ -14,7 +14,6 @@ class MIDI::Stream {
 
     method continue { MIDI::Stream::Tables::continue() }
     method stop { MIDI::Stream::Tables::stop() }
-
 }
 
 1;
