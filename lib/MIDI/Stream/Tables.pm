@@ -95,7 +95,11 @@ sub is_status_byte { $_[0] & 0x80 }
 sub has_channel { $_[0] < 0xf0 }
 
 sub is_cc {
-    return if $_[0] < 0xb0 || $_[0] > 0xbf; 1;
+    ( $_[0] & 0xf0 ) == 0xb0;
+}
+
+sub is_pitch_bend {
+    ( $_[0] & 0xf0 ) == 0xe0;
 }
 
 sub combine_bytes {
@@ -124,6 +128,7 @@ our @EXPORT_OK = qw/
     is_status_byte
     has_channel
     is_cc
+    is_pitch_bend
     combine_bytes
     split_bytes
 /;
