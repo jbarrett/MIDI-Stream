@@ -42,6 +42,10 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         push $filter_cb->{ $event }->@*, $callback;
     }
 
+    method cancel_callbacks( $event ) {
+        delete $filter_cb->{ $event };
+    }
+
     method events {
         splice @events;
     }
