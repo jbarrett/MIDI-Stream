@@ -1,11 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::FIFO;
+use Feature::Compat::Class;
 
 # ABSTRACT: Fixed Size FIFO/Queue for rolling averages
-
-use v5.26;
-use Feature::Compat::Class;
 
 class MIDI::Stream::FIFO {
     use List::Util qw/ reduce /;

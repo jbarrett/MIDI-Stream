@@ -45,9 +45,13 @@ my $event_keys = {
     note_on        => [qw/ channel note velocity /],
     polytouch      => [qw/ channel note pressure /],
     control_change => [qw/ channel control value /],
-    program_change => [qw/ program /],
+    program_change => [qw/ channel program /],
     aftertouch     => [qw/ channel pressure /],
-    pitch_bend     => [qw/ channel value /]
+    pitch_bend     => [qw/ channel value /],
+    song_position  => [qw/ position /],
+    song_select    => [qw/ song /],
+    timecode       => [qw/ byte /],
+    sysex          => [qw/ msg /],
 };
 
 sub keys_for {
@@ -76,6 +80,8 @@ sub is_single_byte { $_[0] > 0xf5 }
 
 sub message_length {
     my ( $status ) = @_;
+
+    return 0 unless $status;
 
     return 0 if $status < 0x80;
     return 3 if $status < 0xc0;
