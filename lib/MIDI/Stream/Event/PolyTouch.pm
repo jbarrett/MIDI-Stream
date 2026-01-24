@@ -1,11 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Event::PolyTouch;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI channel event base class
-
-use v5.26;
-use Feature::Compat::Class;
 
 class MIDI::Stream::Event::PolyTouch
     :isa( MIDI::Stream::Event::Channel ) {

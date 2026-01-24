@@ -1,13 +1,8 @@
-use strict;
-use warnings;
-package MIDI::Stream::Event::Note;
-
-# ABSTRACT: MIDI note class
-
 use v5.26;
+use warnings;
 use Feature::Compat::Class;
 
-package MIDI::Stream::Event::Note;
+# ABSTRACT: MIDI note class
 
 class MIDI::Stream::Event::Note
     :isa( MIDI::Stream::Event::Channel ) {

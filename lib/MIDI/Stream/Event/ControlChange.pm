@@ -1,11 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Event::ControlChange;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI Control Change class
-
-use v5.26;
-use Feature::Compat::Class;
 
 class MIDI::Stream::Event::ControlChange
     :isa( MIDI::Stream::Event::Channel ) {
@@ -17,7 +14,6 @@ class MIDI::Stream::Event::ControlChange
     ADJUST {
         $control = $self->message->[ 1 ];
         $value   = $self->message->[ 2 ];
-
     }
 }
 

@@ -1,11 +1,8 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Event::ProgramChange;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI note class
-
-use v5.26;
-use Feature::Compat::Class;
 
 class MIDI::Stream::Event::ProgramChange
     :isa( MIDI::Stream::Event::Channel ) {

@@ -1,16 +1,10 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Event;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI event base class
 
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
-
-use Feature::Compat::Class;
 use experimental qw/ signatures /;
-
-package MIDI::Stream::Event;
 
 class MIDI::Stream::Event {
     use Carp qw/ croak /;
