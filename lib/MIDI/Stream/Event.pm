@@ -25,14 +25,14 @@ class MIDI::Stream::Event {
         my $status = $message->[0];
         return if $status < 0x80;
 
-        my sub instance( $name ) {
+        my sub instance( $name = undef ) {
             my $class = __PACKAGE__ . ( $name ? "::$name" : '' );
             load $class;
             $class->new( message => $message );
         }
 
         # Single byte status
-        return instance() if $status > 0xf7;
+        return instance() if $status > 0xf3;
 
         # Channel events
         return instance( 'Note' )           if $status < 0xa0;
@@ -41,6 +41,12 @@ class MIDI::Stream::Event {
         return instance( 'ProgramChange' )  if $status < 0xd0;
         return instance( 'AfterTouch' )     if $status < 0xe0;
         return instance( 'PitchBend' )      if $status < 0xf0;
+
+        # System events
+        return instance( 'SysEx' )        if $status == 0xf0;
+        return instance( 'TimeCode' )     if $status == 0xf1;
+        return instance( 'SongPosition' ) if $status == 0xf2;
+        return instance( 'SongSelect' )   if $status == 0xf3;
     }
 
     method as_hashref {
