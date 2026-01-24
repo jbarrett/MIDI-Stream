@@ -83,16 +83,18 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
             splice @event, 2, 1, split_bytes( $event[2] );
         }
 
-        if ( $event[0] eq 'sysex' || $event[0] eq 'sysex_str' ) {
-            my $msg = chr( 0xf0 ) . $event[1];
-            $msg .= substr( $event[1], -1 ) ne chr( 0xf7 )
-                ? chr( 0xf7 )
-                : '';
-            return $msg;
-        }
-
-        if ( $event[0] eq 'sysex_arr' ) {
-            push @event, 0xf7 unless $event[-1] == 0xf7;
+        if ( $event[0] eq 'sysex' ) {
+            if ( ref $event[1] eq 'ARRAY' ) {
+                @event = ( $event[0], $event[1]->@* );
+                push @event, 0xf7 unless $event[-1] == 0xf7;
+            }
+            else {
+                my $msg = chr( 0xf0 ) . $event[1];
+                $msg .= substr( $event[1], -1 ) ne chr( 0xf7 )
+                    ? chr( 0xf7 )
+                    : '';
+                return $msg;
+            }
         }
 
         my $event_name = shift @event;
