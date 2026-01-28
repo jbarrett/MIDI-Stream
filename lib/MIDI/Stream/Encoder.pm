@@ -80,7 +80,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         }
 
         if ( $event[0] eq 'pitch_bend' ) {
-            splice @event, 2, 1, split_bytes( $event[2] );
+            splice @event, 2, 1, split_bytes( $event[2] + 8192 );
         }
 
         if ( $event[0] eq 'sysex' ) {

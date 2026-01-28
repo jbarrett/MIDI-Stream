@@ -8,7 +8,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
-    use MIDI::Stream::Tables qw/ is_cc is_realtime is_pitch_bend message_length /;
+    use MIDI::Stream::Tables qw/ is_cc is_realtime message_length /;
     use MIDI::Stream::FIFO;
     use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
