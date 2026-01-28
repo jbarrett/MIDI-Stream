@@ -135,14 +135,22 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
                 # Real-Time messages can appear within other messages.
                 if ( is_realtime( $status ) ) {
-                    $self->&_push_event( [ $status ] );
+                    # Push unless we have an undefined realtime status
+                    $self->&_push_event( [ $status ] ) unless $status == 0xf9 || $status == 0xfd;
                     next BYTE;
                 }
 
                 # Any non-Real-Time status byte ends a SysEx
-                # Push the sysex and proceed ...
+                # Push the pending sysex and proceed ...
                 if ( @pending_event && $pending_event[0] == 0xf0 ) {
                     $self->&_push_event;
+                }
+
+                # Undefined system statuses which should reset running status -
+                # a full message needs to be received after this
+                if ( $status == 0xf4 || $status == 0xf5 ) {
+                    @pending_event = ();
+                    next BYTE;
                 }
 
                 # Should now be able to push any single-byte statuses,
