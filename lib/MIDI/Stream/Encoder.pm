@@ -20,9 +20,11 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $sysex_f0_terminates :param = 1;
 
     field $enable_14bit :param = 0;
-    field $enable_running_status :param = 1;
+    field $enable_running_status :param = 0;
+    field $running_status_retransmit :param = 10;
 
     field $running_status = 0;
+    field $running_status_count = 0;
 
     field $err_cb :param = sub { croak @_; };
     field $msg_cb :param = sub { @_ };
@@ -40,24 +42,37 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     }
 
     method _running_status( $status ) {
+        return $status unless $enable_running_status;
         # MIDI 1.0 Detailed Specification v4.2.1 p. 5
         # Data Types > Status Bytes > Running Status:
-        # "Running Status will be stopped when any other Status byte
+        #
+        # "For Voice and Mode messages only ...
+        # Running Status will be stopped when any other Status byte
         # intervenes. Real-Time messages should not affect Running Status."
         #
-        # There is at least one more single-byte status which is not realtime
-        # (tune request), but also *probably* shouldn't touch running status -
-        # Setting running status for a single byte status is redundant.
-        #
-        # I've decided to treat all single byte statuses as realtime for the
-        # pruposes of running status. If tune request *should* effect the
-        # running status, restore the is_realtime() line, and remove the
-        # is_single_byte() line.
-        #
-        # return $status if is_realtime( $status );
-        return $status if is_single_byte( $status );
-        return 0 if $status == $running_status;
+        # I interpret this as:
+        # - Running status is only for channel messages
+        # - System messages reset status, but do not set it
+        # - ...apart form realtime status which does not reset or set
+        return $status if is_realtime( $status );
+        if ( ! has_channel( $status ) ) {
+            $self->clear_running_status;
+            return $status;
+        }
+
+        # Running status found, and haven't reached retransmit threshold
+        return 0 if
+            $status == $running_status &&
+            $running_status_count++ < $running_status_retransmit;
+
+        # Set and return status
+        $running_status_count = 0;
         $running_status = $status;
+    }
+
+    method clear_running_status {
+        $running_status_count = 0;
+        $running_status = 0;
     }
 
     method encode( $event ) {
