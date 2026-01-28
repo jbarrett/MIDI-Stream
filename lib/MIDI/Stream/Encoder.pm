@@ -78,6 +78,8 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     method encode( $event ) {
         $event = $self->&_flatten( $event )
             if ref $event eq 'HASH';
+        $event = $event->as_arrayref
+            if eval{ $event->isa('MIDI::Stream::Event') };
         my @event = $event->@*;
 
         # Allow definition of multiple notes in note messages
