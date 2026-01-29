@@ -27,15 +27,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $running_status = 0;
     field $running_status_count = 0;
 
-    field $err_cb :param = sub { croak @_; };
-    field $msg_cb :param = sub { @_ };
-
-    field $warn_cb :param = sub { carp( @_ ); };
-
-    method attach_callback( $callback ) {
-        $msg_cb = $callback;
-    }
-
     my method _flatten( $event ) {
         my @keys = ( 'name', keys_for( $event->{ name } )->@* );
         my @e = $event->@{ @keys };
