@@ -15,10 +15,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
 
     use namespace::autoclean;
 
-    field $zero_index_channel  :param = 1;
-    field $concat_multibyte    :param = 1;
-    field $sysex_f0_terminates :param = 1;
-
     field $enable_14bit :param = 0;
     field $enable_running_status :param = 0;
     field $running_status_retransmit :param = 10;

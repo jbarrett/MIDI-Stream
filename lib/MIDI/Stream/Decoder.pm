@@ -14,8 +14,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Syntax::Operator::Equ;
     use namespace::autoclean;
 
-    field $zero_index_channel  :param = 1;
-    field $detect_note_off     :param = 1;
     field $retain_events       :param = 1;
 
     field $enable_14bit :param = 0;
