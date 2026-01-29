@@ -6,9 +6,6 @@ package MIDI::Stream::Tables;
 
 use parent 'Exporter';
 
-use List::Util qw/ first /;
-use Scalar::Util qw/ looks_like_number /;
-
 my %status; my %fstatus;
 BEGIN {
     %status = (
