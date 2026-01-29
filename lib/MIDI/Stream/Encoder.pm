@@ -83,20 +83,6 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
             if eval{ $event->isa('MIDI::Stream::Event') };
         my @event = $event->@*;
 
-        # Allow definition of multiple notes in note messages
-        # $encoder->encode( [ note_on => 0, [ 67, 68, 69 ], [ 100, 70, 60 ] ] );
-        # TODO: This sucks, improve it or lose it.
-        if ( index( $event[0], 'note' ) == 0 && ref $event[2] eq 'ARRAY' ) {
-            my @vel = ref $event[3] eq 'ARRAY'
-                ? $event[3]->@*
-                : ( $event[3] ) x $event[2]->@*;
-
-            push @vel, ( $vel[-1] ) x ( $event[2]->@* - @vel )
-                if $event[2]->@* > @vel;
-
-            return join '', map { $self->encode( [ $event->@[ 0, 1 ], $_, shift @vel ] ) } $event[2]->@*;
-        }
-
         if ( $event[0] eq 'sysex' ) {
             if ( ref $event[1] eq 'ARRAY' ) {
                 @event = ( $event[0], $event[1]->@* );
