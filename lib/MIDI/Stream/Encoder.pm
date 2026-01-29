@@ -23,6 +23,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $enable_running_status :param = 0;
     field $running_status_retransmit :param = 10;
 
+    field @msb;
     field $running_status = 0;
     field $running_status_count = 0;
 
@@ -107,6 +108,22 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
                     ? chr( 0xf7 )
                     : '';
                 return $msg;
+            }
+        }
+
+        if ( $enable_14bit && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
+            my ( $lsb, $msb ) = split_bytes( $event [3] );
+            # Comparing new MSB against last-sent MSB for this CC
+            if ( $msb[ $event[2] ] == $msb ) {
+                # MSB already sent, just send LSB on CC + 32
+                $event[2] |= 0x20;
+                $event[3] = $lsb;
+            }
+            else {
+                # Re-send MSB, concatenate LSB running status
+                $msb[ $event[2] ] = $msb;
+                $event[3] = $msb;
+                push @event, $event[2] | 0x20, $lsb;
             }
         }
 
