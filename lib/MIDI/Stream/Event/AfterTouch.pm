@@ -12,6 +12,8 @@ class MIDI::Stream::Event::AfterTouch
 
     ADJUST {
         $pressure = $self->message->[ 1 ];
+
+        $self->_push_fields( 'pressure' );
     }
 
 }

@@ -17,6 +17,7 @@ class MIDI::Stream::Event::SysEx
     ADJUST {
         ( undef, $msg->@* ) = $self->message->@*;
         delete $msg->[ -1 ] if $msg->[ -1 ] == 0xf7;
+        $self->_push_fields( 'msg' );
     }
 }
 

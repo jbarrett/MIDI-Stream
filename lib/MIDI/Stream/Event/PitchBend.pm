@@ -12,6 +12,8 @@ class MIDI::Stream::Event::PitchBend
 
     ADJUST {
         $value = combine_bytes( $self->message->@[ 1, 2 ] ) - 8192;
+
+        $self->_push_fields( 'value' );
     }
 }
 

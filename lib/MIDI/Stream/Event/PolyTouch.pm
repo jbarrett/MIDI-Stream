@@ -13,6 +13,8 @@ class MIDI::Stream::Event::PolyTouch
     ADJUST {
         $note = $self->message->[ 1 ];
         $pressure = $self->message->[ 2 ];
+
+        $self->_push_fields( qw/ note pressure / );
     }
 }
 

@@ -11,6 +11,8 @@ class MIDI::Stream::Event::SongSelect
 
     ADJUST {
         $song = $self->message->[1];
+
+        $self->_push_fields( 'song' );
     }
 }
 

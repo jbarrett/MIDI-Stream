@@ -6,7 +6,6 @@ use Feature::Compat::Class;
 
 class MIDI::Stream::Event::ControlChange
     :isa( MIDI::Stream::Event::Channel ) {
-    use MIDI::Stream::Tables qw/ combine_bytes /;
 
     field $control :reader;
     field $value   :reader;
@@ -14,6 +13,8 @@ class MIDI::Stream::Event::ControlChange
     ADJUST {
         $control = $self->message->[ 1 ];
         $value   = $self->message->[ 2 ];
+
+        $self->_push_fields( qw/ control value / );
     }
 }
 

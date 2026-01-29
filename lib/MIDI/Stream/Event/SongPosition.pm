@@ -12,6 +12,8 @@ class MIDI::Stream::Event::SongPosition
 
     ADJUST {
         $position = combine_bytes( $self->message->@[ 1, 2 ] );
+
+        $self->_push_fields( 'position' );
     }
 }
 

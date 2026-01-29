@@ -7,8 +7,8 @@ use Feature::Compat::Class;
 use experimental qw/ signatures /;
 
 class MIDI::Stream::Event {
-    use Carp qw/ croak /;
-    use MIDI::Stream::Tables qw/ status_name keys_for /;
+    use Carp qw/ carp croak /;
+    use MIDI::Stream::Tables qw/ status_name /;
     use Module::Load;
     use namespace::autoclean;
 
@@ -16,6 +16,20 @@ class MIDI::Stream::Event {
     field $message :reader :param;
     field $bytes;
     field $status :reader;
+    field $fields :reader = [];
+
+    method _push_fields( @new_fields ) {
+        # Lists of fields, used for generating some serialised formats, were
+        # formerly listed in MIDI::Stream::Tables which meant keeping track of
+        # accessors in two places.
+        # I'm not entirely certain this is categorically better...
+        if ( index( caller, __PACKAGE__ ) != 0 ) {
+            carp("Intended for internal use only - ignoring");
+            return -1;
+        }
+
+        push $fields->@*, @new_fields;
+    }
 
     method bytes {
         $bytes //= join '', map { chr } $message->@*;
@@ -52,7 +66,7 @@ class MIDI::Stream::Event {
     method as_hashref {
         +{
             map { $_ => $self->$_ }
-                ( 'name', keys_for( $self->name )->@* )
+                ('name', 'fields', $self->fields->@* )
         };
     }
 
@@ -61,7 +75,7 @@ class MIDI::Stream::Event {
     method as_arrayref {
         [
             $self->name =>
-            map { $self->$_ } keys_for( $self->name )->@*
+            map { $self->$_ } $self->fields->@*
         ]
     }
 
@@ -70,6 +84,8 @@ class MIDI::Stream::Event {
         $status = $message->[0];
         # note on with velocity 0 is note off
         $name = 'note_off' if $status < 0xa0 && !$message->[2];
+
+        $self->_push_fields( 'name' );
     }
 }
 

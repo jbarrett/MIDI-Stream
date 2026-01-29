@@ -9,6 +9,8 @@ class MIDI::Stream::Event::Channel :isa( MIDI::Stream::Event ) {
 
     ADJUST {
         $channel = $self->message->[0] & 0x0f;
+
+        $self->_push_fields( 'channel' );
     }
 }
 

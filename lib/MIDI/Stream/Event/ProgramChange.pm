@@ -11,6 +11,8 @@ class MIDI::Stream::Event::ProgramChange
 
     ADJUST {
         $program = $self->message->[1];
+
+        $self->_push_fields( 'program' );
     }
 }
 

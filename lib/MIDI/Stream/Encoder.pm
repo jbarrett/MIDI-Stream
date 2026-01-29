@@ -9,7 +9,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     use Carp qw/ carp croak /;
     use List::Util qw/ mesh /;
     use MIDI::Stream::Tables qw/
-        status_byte has_channel keys_for is_single_byte
+        status_byte has_channel is_single_byte
         plain_status_byte split_bytes is_realtime
     /;
 
@@ -28,9 +28,9 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $running_status_count = 0;
 
     my method _flatten( $event ) {
-        my @keys = ( 'name', keys_for( $event->{ name } )->@* );
-        my @e = $event->@{ @keys };
-        [ $event->@{ @keys } ];
+        my @fields = eval { $event->{fields}->@* };
+        @fields || croak "Field order not specified in hash";
+        [ $event->@{ @fields } ];
     }
 
     method _running_status( $status ) {

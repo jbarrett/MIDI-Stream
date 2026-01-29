@@ -13,6 +13,8 @@ class MIDI::Stream::Event::Note
     ADJUST {
         $note = $self->message->[1];
         $velocity = $self->message->[2];
+
+        $self->_push_fields( qw/ note velocity / );
     }
 
 }

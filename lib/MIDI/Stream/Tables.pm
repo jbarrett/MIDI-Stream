@@ -37,24 +37,6 @@ BEGIN {
 my %name = reverse %status;
 my %fname = reverse %fstatus;
 
-my $event_keys = {
-    note_off       => [qw/ channel note velocity /],
-    note_on        => [qw/ channel note velocity /],
-    polytouch      => [qw/ channel note pressure /],
-    control_change => [qw/ channel control value /],
-    program_change => [qw/ channel program /],
-    aftertouch     => [qw/ channel pressure /],
-    pitch_bend     => [qw/ channel value /],
-    song_position  => [qw/ position /],
-    song_select    => [qw/ song /],
-    timecode       => [qw/ byte /],
-    sysex          => [qw/ msg /],
-};
-
-sub keys_for {
-    $event_keys->{ $_[0] } // [];
-}
-
 sub status_name {
     $name{ $_[0] & 0xf0 } // $fname{ $_[0] };
 }
@@ -120,7 +102,6 @@ use constant {
 };
 
 our @EXPORT_OK = qw/
-    keys_for
     status_name
     status_byte
     plain_status_byte

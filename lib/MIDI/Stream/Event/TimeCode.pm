@@ -21,6 +21,7 @@ class MIDI::Stream::Event::TimeCode
 
     ADJUST {
         $byte = $self->message->[ 1 ];
+        $self->_push_fields( 'byte' );
     }
 }
 
