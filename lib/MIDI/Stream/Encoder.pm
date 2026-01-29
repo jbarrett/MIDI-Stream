@@ -10,7 +10,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     use List::Util qw/ mesh /;
     use MIDI::Stream::Tables qw/
         status_byte has_channel keys_for is_single_byte
-        plain_status_byte split_bytes
+        plain_status_byte split_bytes is_realtime
     /;
 
     use namespace::autoclean;
