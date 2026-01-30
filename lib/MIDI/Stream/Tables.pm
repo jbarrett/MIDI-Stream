@@ -37,6 +37,11 @@ BEGIN {
 my %name = reverse %status;
 my %fname = reverse %fstatus;
 
+# Not exactly ecstatic about this pattern, but an alternative has yet to
+# occur to me. One alternative I thought about was having objects push their
+# ordered keys to an array in the top-level class, but this means you need
+# an object instance to get the ordering:
+# $class->from_hashref( $event )->as_arrayref seemed a little perverse.
 my $event_keys = {
     note_off       => [qw/ channel note velocity /],
     note_on        => [qw/ channel note velocity /],
@@ -59,17 +64,7 @@ sub status_name {
     $name{ $_[0] & 0xf0 } // $fname{ $_[0] };
 }
 
-sub status_byte {
-    my ( $status_name, $channel ) = @_;
-    $channel //= 0;
-    my $byte = $status{ $status_name } // $fstatus{ $status_name };
-    $byte |= ( $channel & 0x0f ) if has_channel( $byte );
-    $byte;
-}
-
-sub plain_status_byte { $status{ $_[0] } // $fstatus{ $_[0] } }
-
-sub status_chr { chr status_byte( @_ ) }
+sub status_byte { $status{ $_[0] } // $fstatus{ $_[0] } }
 
 sub is_realtime { $_[0] > 0xf7 }
 
@@ -123,7 +118,6 @@ our @EXPORT_OK = qw/
     keys_for
     status_name
     status_byte
-    plain_status_byte
     status_chr
     is_realtime
     is_single_byte

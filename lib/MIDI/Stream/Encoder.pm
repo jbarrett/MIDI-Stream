@@ -9,8 +9,8 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     use Carp qw/ carp croak /;
     use List::Util qw/ mesh /;
     use MIDI::Stream::Tables qw/
-        status_byte has_channel keys_for is_single_byte
-        plain_status_byte split_bytes is_realtime
+        has_channel keys_for is_single_byte
+        status_byte split_bytes is_realtime
     /;
 
     use namespace::autoclean;
@@ -101,7 +101,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         }
 
         my $event_name = shift @event;
-        my $status = plain_status_byte( $event_name );
+        my $status = status_byte( $event_name );
         if ( ! $status ) {
             carp "Ignoring unknown status : $event_name";
             return;
