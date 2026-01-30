@@ -77,7 +77,9 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
     my method _push_event( $event = undef ) {
         state $t = [ gettimeofday ];
-        $event //= [ @pending_event ]; # Do not use a reference to @pending_event, contents may change
+        # Do not use a reference to @pending_event!
+        # Contents will have changed by the time you get round to using it.
+        $event //= [ @pending_event ];
         $event = $self->&_expand_cc( $event );
         return unless $event;
         my $dt = tv_interval( $t );
