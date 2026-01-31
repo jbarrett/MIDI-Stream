@@ -7,10 +7,10 @@ run_file({
    filename  => '100_channel_messages.json'
 });
 
-#run_file({
-#   test_type => 'encoding',
-#   filename  => '000_example.json'
-#});
+run_file({
+   test_type => 'encoding',
+   filename  => '100_channel_messages.json'
+});
 
 
 done_testing;
