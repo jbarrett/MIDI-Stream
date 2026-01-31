@@ -108,7 +108,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         }
 
         if ( $event_name eq 'pitch_bend' ) {
-            splice @event, 1, 1, split_bytes( $event[2] + 8192 );
+            splice @event, 1, 1, split_bytes( $event[1] + 8192 );
         }
 
         # 'Note off' events with velocity should retain their status,
