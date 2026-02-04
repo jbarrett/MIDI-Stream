@@ -119,7 +119,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         $status |= 0x10 if
              $enable_running_status &&
              $status == 0x80 &&
-             !$event[ 1 ] &&
+             !$event[ 2 ] &&
              $status != ( $running_status & 0xf0 );
 
         $status |= shift @event & 0xf if has_channel( $status );
