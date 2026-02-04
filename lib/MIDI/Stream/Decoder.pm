@@ -110,6 +110,10 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         $message_length = message_length( $status );
     }
 
+    my method _warn( $msg ) {
+        $warn_cb->( $msg );
+    }
+
     method decode( $bytestring ) {
         my @bytes = unpack 'C*', $bytestring;
         my $status;
@@ -189,9 +193,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         join '', map { $self->single_event( $_ ) } @events;
     }
 
-    my method _warn( $msg ) {
-        $warn_cb->( $msg );
-    }
 }
 
 1;
