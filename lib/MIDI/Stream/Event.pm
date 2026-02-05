@@ -6,42 +6,45 @@ use Feature::Compat::Class;
 
 use experimental qw/ signatures /;
 
-class MIDI::Stream::Event {
-    use Carp qw/ croak /;
-    use MIDI::Stream::Tables qw/ status_name keys_for /;
-    use namespace::autoclean;
+package MIDI::Stream::Event;
+class MIDI::Stream::Event;
 
-    field $name :reader;
-    field $message :reader :param;
-    field $bytes;
-    field $status :reader;
+our $VERSION = 0.00;
 
-    method bytes {
-        $bytes //= join '', map { chr } $message->@*;
-    }
+use Carp qw/ croak /;
+use MIDI::Stream::Tables qw/ status_name keys_for /;
+use namespace::autoclean;
 
-    method as_hashref {
-        +{
-            map { $_ => $self->$_ }
-                ( 'name', keys_for( $self->name )->@* )
-        };
-    }
+field $name :reader;
+field $message :reader :param;
+field $bytes;
+field $status :reader;
 
-    method TO_JSON { $self->as_hashref };
+method bytes {
+    $bytes //= join '', map { chr } $message->@*;
+}
 
-    method as_arrayref {
-        [
-            $self->name =>
-            map { $self->$_ } keys_for( $self->name )->@*
-        ]
-    }
+method as_hashref {
+    +{
+        map { $_ => $self->$_ }
+            ( 'name', keys_for( $self->name )->@* )
+    };
+}
 
-    ADJUST {
-        $name = status_name( $message->[0] ) // 'unknown';
-        $status = $message->[0];
-        # note on with velocity 0 is note off
-        $name = 'note_off' if $status < 0xa0 && !$message->[2];
-    }
+method TO_JSON { $self->as_hashref };
+
+method as_arrayref {
+    [
+        $self->name =>
+        map { $self->$_ } keys_for( $self->name )->@*
+    ]
+}
+
+ADJUST {
+    $name = status_name( $message->[0] ) // 'unknown';
+    $status = $message->[0];
+    # note on with velocity 0 is note off
+    $name = 'note_off' if $status < 0xa0 && !$message->[2];
 }
 
 1;

@@ -4,14 +4,15 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI note class
 
-class MIDI::Stream::Event::ProgramChange
-    :isa( MIDI::Stream::Event::Channel ) {
+package MIDI::Stream::Event::ProgramChange;
+class MIDI::Stream::Event::ProgramChange :isa( MIDI::Stream::Event::Channel );
 
-    field $program :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $program = $self->message->[1];
-    }
+field $program :reader;
+
+ADJUST {
+    $program = $self->message->[1];
 }
 
 1;

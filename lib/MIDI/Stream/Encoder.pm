@@ -4,142 +4,145 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI event to bytestream encoder
 
-class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
-    use Time::HiRes qw/ gettimeofday tv_interval /;
-    use Carp qw/ carp croak /;
-    use List::Util qw/ mesh /;
-    use MIDI::Stream::Tables qw/
-        has_channel keys_for is_single_byte
-        status_byte split_bytes is_realtime
-    /;
-    use Syntax::Operator::Equ;
-    use namespace::autoclean;
+package MIDI::Stream::Encoder;
+class MIDI::Stream::Encoder :isa( MIDI::Stream );
 
-    field $enable_14bit :param = 0;
-    field $enable_running_status :param = 0;
-    field $running_status_retransmit :param = 10;
+our $VERSION = 0.00;
 
-    field @msb;
-    field $running_status = 0;
-    field $running_status_count = 0;
+use Time::HiRes qw/ gettimeofday tv_interval /;
+use Carp qw/ carp croak /;
+use List::Util qw/ mesh /;
+use MIDI::Stream::Tables qw/
+    has_channel keys_for is_single_byte
+    status_byte split_bytes is_realtime
+/;
+use Syntax::Operator::Equ;
+use namespace::autoclean;
 
-    method continue { MIDI::Stream::Tables::continue() }
-    method stop { MIDI::Stream::Tables::stop() }
+field $enable_14bit :param = 0;
+field $enable_running_status :param = 0;
+field $running_status_retransmit :param = 10;
 
-    my $_flatten = method( $event ) {
-        my @keys = ( 'name', keys_for( $event->{ name } )->@* );
-        my @e = $event->@{ @keys };
-        [ $event->@{ @keys } ];
-    };
+field @msb;
+field $running_status = 0;
+field $running_status_count = 0;
 
-    my $_running_status = method( $status ) {
-        return $status unless $enable_running_status;
-        # MIDI 1.0 Detailed Specification v4.2.1 p. 5
-        # Data Types > Status Bytes > Running Status:
-        #
-        # "For Voice and Mode messages only ...
-        # Running Status will be stopped when any other Status byte
-        # intervenes. Real-Time messages should not affect Running Status."
-        #
-        # I interpret this as:
-        # - Running status is only for channel messages
-        # - System messages reset status, but do not set it
-        # - ...apart form realtime status which does not reset or set
-        return $status if is_realtime( $status );
-        if ( ! has_channel( $status ) ) {
-            $self->clear_running_status;
-            return $status;
-        }
+method continue { MIDI::Stream::Tables::continue() }
+method stop { MIDI::Stream::Tables::stop() }
 
-        # Running status found, and haven't reached retransmit threshold
-        return 0 if
-            $status == $running_status &&
-            $running_status_count++ < $running_status_retransmit;
+my $_flatten = method( $event ) {
+    my @keys = ( 'name', keys_for( $event->{ name } )->@* );
+    my @e = $event->@{ @keys };
+    [ $event->@{ @keys } ];
+};
 
-        # Set and return status
-        $running_status_count = 0;
-        $running_status = $status;
-    };
-
-    method clear_running_status {
-        $running_status_count = 0;
-        $running_status = 0;
+my $_running_status = method( $status ) {
+    return $status unless $enable_running_status;
+    # MIDI 1.0 Detailed Specification v4.2.1 p. 5
+    # Data Types > Status Bytes > Running Status:
+    #
+    # "For Voice and Mode messages only ...
+    # Running Status will be stopped when any other Status byte
+    # intervenes. Real-Time messages should not affect Running Status."
+    #
+    # I interpret this as:
+    # - Running status is only for channel messages
+    # - System messages reset status, but do not set it
+    # - ...apart form realtime status which does not reset or set
+    return $status if is_realtime( $status );
+    if ( ! has_channel( $status ) ) {
+        $self->clear_running_status;
+        return $status;
     }
 
-    method encode( $event ) {
-        $event = $self->$_flatten( $event )
-            if ref $event eq 'HASH';
-        $event = $event->as_arrayref
-            if eval{ $event->isa('MIDI::Stream::Event') };
-        my @event = $event->@*;
+    # Running status found, and haven't reached retransmit threshold
+    return 0 if
+        $status == $running_status &&
+        $running_status_count++ < $running_status_retransmit;
 
-        if ( $event[0] eq 'sysex' ) {
-            if ( ref $event[1] eq 'ARRAY' ) {
-                @event = ( $event[0], $event[1]->@* );
-                push @event, 0xf7 unless $event[-1] == 0xf7;
-            }
-            else {
-                my $msg = chr( 0xf0 ) . $event[1];
-                $msg .= substr( $event[1], -1 ) ne chr( 0xf7 )
-                    ? chr( 0xf7 )
-                    : '';
-                return $msg;
-            }
+    # Set and return status
+    $running_status_count = 0;
+    $running_status = $status;
+};
+
+method clear_running_status {
+    $running_status_count = 0;
+    $running_status = 0;
+}
+
+method encode( $event ) {
+    $event = $self->$_flatten( $event )
+        if ref $event eq 'HASH';
+    $event = $event->as_arrayref
+        if eval{ $event->isa('MIDI::Stream::Event') };
+    my @event = $event->@*;
+
+    if ( $event[0] eq 'sysex' ) {
+        if ( ref $event[1] eq 'ARRAY' ) {
+            @event = ( $event[0], $event[1]->@* );
+            push @event, 0xf7 unless $event[-1] == 0xf7;
         }
-
-        if ( $enable_14bit && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
-            my ( $lsb, $msb ) = split_bytes( $event [3] );
-            # Comparing new MSB against last-sent MSB for this CC
-            if ( $msb[ $event[2] ] === $msb ) {
-                # MSB already sent, just send LSB on CC + 32
-                $event[2] |= 0x20;
-                $event[3] = $lsb;
-            }
-            else {
-                # Re-send MSB, concatenate LSB running status
-                $msb[ $event[2] ] = $msb;
-                $event[3] = $msb;
-                push @event, $event[2] | 0x20, $lsb;
-            }
+        else {
+            my $msg = chr( 0xf0 ) . $event[1];
+            $msg .= substr( $event[1], -1 ) ne chr( 0xf7 )
+                ? chr( 0xf7 )
+                : '';
+            return $msg;
         }
-
-        my $event_name = shift @event;
-        my $status = status_byte( $event_name );
-        if ( ! $status ) {
-            carp "Ignoring unknown status : $event_name";
-            return;
-        }
-
-        if ( $event_name eq 'pitch_bend' ) {
-            splice @event, 1, 1, split_bytes( $event[1] + 8192 );
-        }
-
-        if ( $event_name eq 'song_position' ) {
-            splice @event, 0, 1, split_bytes( $event[0] );
-        }
-
-        # 'Note off' events with velocity should retain their status,
-        # and set running-status accordingly.
-        # 'Note on' with velocity 0 is treated as 'Note off'.
-        # Strings of 'Note on' events can take better advantage of
-        # running-status.
-        $status |= 0x10 if
-             $enable_running_status &&
-             $status == 0x80 &&
-             !$event[ 2 ] &&
-             $status != ( $running_status & 0xf0 );
-
-        $status |= shift @event & 0xf if has_channel( $status );
-
-        $status = $self->$_running_status( $status );
-        join '', map { chr } $status
-            ? ( $status, @event )
-            : @event
     }
 
-    method encode_events( @events ) {
-        join '', map { $self->encode( $_ ) } @events;
+    if ( $enable_14bit && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
+        my ( $lsb, $msb ) = split_bytes( $event [3] );
+        # Comparing new MSB against last-sent MSB for this CC
+        if ( $msb[ $event[2] ] === $msb ) {
+            # MSB already sent, just send LSB on CC + 32
+            $event[2] |= 0x20;
+            $event[3] = $lsb;
+        }
+        else {
+            # Re-send MSB, concatenate LSB running status
+            $msb[ $event[2] ] = $msb;
+            $event[3] = $msb;
+            push @event, $event[2] | 0x20, $lsb;
+        }
     }
+
+    my $event_name = shift @event;
+    my $status = status_byte( $event_name );
+    if ( ! $status ) {
+        carp "Ignoring unknown status : $event_name";
+        return;
+    }
+
+    if ( $event_name eq 'pitch_bend' ) {
+        splice @event, 1, 1, split_bytes( $event[1] + 8192 );
+    }
+
+    if ( $event_name eq 'song_position' ) {
+        splice @event, 0, 1, split_bytes( $event[0] );
+    }
+
+    # 'Note off' events with velocity should retain their status,
+    # and set running-status accordingly.
+    # 'Note on' with velocity 0 is treated as 'Note off'.
+    # Strings of 'Note on' events can take better advantage of
+    # running-status.
+    $status |= 0x10 if
+         $enable_running_status &&
+         $status == 0x80 &&
+         !$event[ 2 ] &&
+         $status != ( $running_status & 0xf0 );
+
+    $status |= shift @event & 0xf if has_channel( $status );
+
+    $status = $self->$_running_status( $status );
+    join '', map { chr } $status
+        ? ( $status, @event )
+        : @event
+}
+
+method encode_events( @events ) {
+    join '', map { $self->encode( $_ ) } @events;
 }
 
 1;

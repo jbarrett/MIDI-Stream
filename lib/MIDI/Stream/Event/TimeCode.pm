@@ -4,24 +4,25 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI Time Code Qtr. Frame Event
 
-class MIDI::Stream::Event::TimeCode
-    :isa( MIDI::Stream::Event ) {
+package MIDI::Stream::Event::TimeCode;
+class MIDI::Stream::Event::TimeCode :isa( MIDI::Stream::Event );
 
-    field $byte :reader;
-    field $high;
-    field $low;
+our $VERSION = 0.00;
 
-    method high {
-        $high //= $byte & 0xf0 >> 5;
-    }
+field $byte :reader;
+field $high;
+field $low;
 
-    method low {
-        $low //= $byte & 0x0f;
-    }
+method high {
+    $high //= $byte & 0xf0 >> 5;
+}
 
-    ADJUST {
-        $byte = $self->message->[ 1 ];
-    }
+method low {
+    $low //= $byte & 0x0f;
+}
+
+ADJUST {
+    $byte = $self->message->[ 1 ];
 }
 
 1;

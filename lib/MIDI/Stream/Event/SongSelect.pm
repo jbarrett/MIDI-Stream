@@ -4,14 +4,15 @@ use Feature::Compat::Class;
 
 # ABSTRACT: Song Select Event
 
-class MIDI::Stream::Event::SongSelect
-    :isa( MIDI::Stream::Event ) {
+package MIDI::Stream::Event::SongSelect;
+class MIDI::Stream::Event::SongSelect :isa( MIDI::Stream::Event );
 
-    field $song :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $song = $self->message->[1];
-    }
+field $song :reader;
+
+ADJUST {
+    $song = $self->message->[1];
 }
 
 1;

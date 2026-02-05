@@ -4,6 +4,8 @@ package MIDI::Stream::Tables;
 
 # ABSTRACT: MIDI 1.0 look up tables and utility functions
 
+our $VERSION = 0.00;
+
 use parent 'Exporter';
 
 my %status; my %fstatus;

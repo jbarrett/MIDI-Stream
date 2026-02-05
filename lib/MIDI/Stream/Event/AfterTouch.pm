@@ -4,16 +4,17 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI channel event base class
 
-class MIDI::Stream::Event::AfterTouch
-    :isa( MIDI::Stream::Event::Channel ) {
-    use MIDI::Stream::Tables qw/ combine_bytes /;
+package MIDI::Stream::Event::AfterTouch;
+class MIDI::Stream::Event::AfterTouch :isa( MIDI::Stream::Event::Channel );
 
-    field $pressure :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $pressure = $self->message->[ 1 ];
-    }
+use MIDI::Stream::Tables qw/ combine_bytes /;
 
+field $pressure :reader;
+
+ADJUST {
+    $pressure = $self->message->[ 1 ];
 }
 
 1;

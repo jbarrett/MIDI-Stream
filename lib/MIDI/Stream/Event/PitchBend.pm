@@ -4,15 +4,17 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI channel event base class
 
-class MIDI::Stream::Event::PitchBend
-    :isa( MIDI::Stream::Event::Channel ) {
-    use MIDI::Stream::Tables qw/ combine_bytes /;
+package MIDI::Stream::Event::PitchBend;
+class MIDI::Stream::Event::PitchBend :isa( MIDI::Stream::Event::Channel );
 
-    field $value :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $value = combine_bytes( $self->message->@[ 1, 2 ] ) - 8192;
-    }
+use MIDI::Stream::Tables qw/ combine_bytes /;
+
+field $value :reader;
+
+ADJUST {
+    $value = combine_bytes( $self->message->@[ 1, 2 ] ) - 8192;
 }
 
 1;

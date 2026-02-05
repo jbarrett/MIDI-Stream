@@ -2,7 +2,10 @@ use v5.26;
 use warnings;
 use experimental qw/ signatures /;
 
-package MIDI::Stream::EventFactory;
+package
+    MIDI::Stream::EventFactory;
+
+our $VERSION = 0.00;
 
 require MIDI::Stream::Event::Note;
 require MIDI::Stream::Event::PolyTouch;

@@ -4,17 +4,19 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI Control Change class
 
-class MIDI::Stream::Event::ControlChange
-    :isa( MIDI::Stream::Event::Channel ) {
-    use MIDI::Stream::Tables qw/ combine_bytes /;
+package MIDI::Stream::Event::ControlChange;
+class MIDI::Stream::Event::ControlChange :isa( MIDI::Stream::Event::Channel );
 
-    field $control :reader;
-    field $value   :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $control = $self->message->[ 1 ];
-        $value   = $self->message->[ 2 ];
-    }
+use MIDI::Stream::Tables qw/ combine_bytes /;
+
+field $control :reader;
+field $value   :reader;
+
+ADJUST {
+    $control = $self->message->[ 1 ];
+    $value   = $self->message->[ 2 ];
 }
 
 1;

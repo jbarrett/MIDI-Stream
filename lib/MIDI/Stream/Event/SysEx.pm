@@ -4,20 +4,21 @@ use Feature::Compat::Class;
 
 # ABSTRACT: SysEx Event
 
-class MIDI::Stream::Event::SysEx
-    :isa( MIDI::Stream::Event ) {
+package MIDI::Stream::Event::SysEx;
+class MIDI::Stream::Event::SysEx :isa( MIDI::Stream::Event );
 
-    field $msg_str;
-    field $msg :reader = [];
+our $VERSION = 0.00;
 
-    method msg_str {
-        $msg_str //= join '', map { chr } $msg->@*;
-    }
+field $msg_str;
+field $msg :reader = [];
 
-    ADJUST {
-        ( undef, $msg->@* ) = $self->message->@*;
-        delete $msg->[ -1 ] if $msg->[ -1 ] == 0xf7;
-    }
+method msg_str {
+    $msg_str //= join '', map { chr } $msg->@*;
+}
+
+ADJUST {
+    ( undef, $msg->@* ) = $self->message->@*;
+    delete $msg->[ -1 ] if $msg->[ -1 ] == 0xf7;
 }
 
 1;

@@ -4,12 +4,15 @@ use Feature::Compat::Class;
 
 # ABSTRACT: MIDI channel event base class
 
-class MIDI::Stream::Event::Channel :isa( MIDI::Stream::Event ) {
-    field $channel :reader;
+package MIDI::Stream::Event::Channel;
+class MIDI::Stream::Event::Channel :isa( MIDI::Stream::Event );
 
-    ADJUST {
-        $channel = $self->message->[0] & 0x0f;
-    }
+our $VERSION = 0.00;
+
+field $channel :reader;
+
+ADJUST {
+    $channel = $self->message->[0] & 0x0f;
 }
 
 1;
