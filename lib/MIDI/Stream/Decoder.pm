@@ -19,7 +19,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     field $enable_14bit :param = 0;
     field @cc;
 
-    field $warn_cb :param = sub { carp( @_ ); };
     field $event_cb :param = sub { @_ };
     field $filter_cb = {};
 
@@ -89,7 +88,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         my $stream_event = MIDI::Stream::Event->event( $event );
 
         if ( !$stream_event ) {
-            $self->&_warn( "Ignoring unknown status $event->[0]" );
+            carp( "Ignoring unknown status $event->[0]" );
             return;
         }
 
@@ -111,10 +110,6 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         $message_length = message_length( $status );
     }
 
-    my method _warn( $msg ) {
-        $warn_cb->( $msg );
-    }
-
     method decode( $bytestring ) {
         my @bytes = unpack 'C*', $bytestring;
         my $status;
@@ -131,7 +126,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
                 # End-of-Xclusive
                 if ( $status == 0xf7 ) {
-                    $self->&_warn( "EOX received for non-SysEx message - ignoring!") && next BYTE
+                    carp( "EOX received for non-SysEx message - ignoring!") && next BYTE
                         unless $pending_event[0] == 0xf0;
                     $self->&_push_event;
                     $self->&_reset_pending_event;
