@@ -1,20 +1,10 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI bytestream decoding and encoding
 
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
-
-use Feature::Compat::Class;
-
-class MIDI::Stream {
-    use MIDI::Stream::Tables ();
-
-    method continue { MIDI::Stream::Tables::continue() }
-    method stop { MIDI::Stream::Tables::stop() }
-}
+class MIDI::Stream;
 
 1;
 
@@ -23,14 +13,6 @@ __END__
 =pod
 
 =encoding UTF-8
-
-=head1 NAME
-
-MIDI::Stream - MIDI bytestream decoding and encoding
-
-=head1 VERSION
-
-version 0.00
 
 =head1 DESCRIPTION
 

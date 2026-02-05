@@ -23,6 +23,9 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $running_status = 0;
     field $running_status_count = 0;
 
+    method continue { MIDI::Stream::Tables::continue() }
+    method stop { MIDI::Stream::Tables::stop() }
+
     my $_flatten = method( $event ) {
         my @keys = ( 'name', keys_for( $event->{ name } )->@* );
         my @e = $event->@{ @keys };
