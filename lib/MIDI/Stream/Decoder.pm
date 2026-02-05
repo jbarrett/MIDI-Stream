@@ -8,7 +8,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Scalar::Util qw/ reftype /;
     use Time::HiRes qw/ gettimeofday tv_interval /;
     use Carp qw/ carp croak /;
-    use MIDI::Stream::Tables qw/ is_cc is_realtime message_length /;
+    use MIDI::Stream::Tables qw/ is_cc is_realtime message_length combine_bytes /;
     use MIDI::Stream::FIFO;
     use MIDI::Stream::Event;
     use Syntax::Operator::Equ;
@@ -55,13 +55,14 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     my method _expand_cc( $event ) {
         return $event unless is_cc( $event->[ 0 ] );
         return $event unless $enable_14bit;
-        return $event if $event->[ 1 ] > 0x40;
+        return $event if $event->[ 1 ] > 0x3f;
         return $event if $event->[ 2 ] > 0x7f;
 
         if ( $event->[ 1 ] & 0x20 ) {
             my $msb = $cc[ $event->[ 1 ] & ~0x20 ];
             return unless defined $msb;
-            $event->[ 2 ] = combine_bytes( $msb, $event->[ 2 ] );
+            $event->[ 2 ] = combine_bytes( $event->[ 2 ], $msb );
+            $event->[ 1 ] &= ~0x20;
             return $event;
         }
 
