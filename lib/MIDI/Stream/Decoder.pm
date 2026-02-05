@@ -10,7 +10,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
     use Carp qw/ carp croak /;
     use MIDI::Stream::Tables qw/ is_cc is_realtime message_length combine_bytes /;
     use MIDI::Stream::FIFO;
-    use MIDI::Stream::Event;
+    use MIDI::Stream::EventFactory;
     use Syntax::Operator::Equ;
     use namespace::autoclean;
 
@@ -85,7 +85,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         my $dt = tv_interval( $t );
         $t = [ gettimeofday ];
 
-        my $stream_event = MIDI::Stream::Event->event( $event );
+        my $stream_event = MIDI::Stream::EventFactory->event( $event );
 
         if ( !$stream_event ) {
             carp( "Ignoring unknown status $event->[0]" );

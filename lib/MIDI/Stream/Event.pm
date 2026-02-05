@@ -9,7 +9,6 @@ use experimental qw/ signatures /;
 class MIDI::Stream::Event {
     use Carp qw/ croak /;
     use MIDI::Stream::Tables qw/ status_name keys_for /;
-    use Module::Load;
     use namespace::autoclean;
 
     field $name :reader;
@@ -19,34 +18,6 @@ class MIDI::Stream::Event {
 
     method bytes {
         $bytes //= join '', map { chr } $message->@*;
-    }
-
-    sub event( $class, $message ) {
-        my $status = $message->[0];
-        return if $status < 0x80;
-
-        my sub instance( $name = undef ) {
-            my $class = __PACKAGE__ . ( $name ? "::$name" : '' );
-            load $class;
-            $class->new( message => $message );
-        }
-
-        # Single byte status
-        return instance() if $status > 0xf3;
-
-        # Channel events
-        return instance( 'Note' )           if $status < 0xa0;
-        return instance( 'PolyTouch' )      if $status < 0xb0;
-        return instance( 'ControlChange' )  if $status < 0xc0;
-        return instance( 'ProgramChange' )  if $status < 0xd0;
-        return instance( 'AfterTouch' )     if $status < 0xe0;
-        return instance( 'PitchBend' )      if $status < 0xf0;
-
-        # System events
-        return instance( 'SysEx' )        if $status == 0xf0;
-        return instance( 'TimeCode' )     if $status == 0xf1;
-        return instance( 'SongPosition' ) if $status == 0xf2;
-        return instance( 'SongSelect' )   if $status == 0xf3;
     }
 
     method as_hashref {
