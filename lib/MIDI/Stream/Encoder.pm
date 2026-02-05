@@ -12,7 +12,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         has_channel keys_for is_single_byte
         status_byte split_bytes is_realtime
     /;
-
+    use Syntax::Operator::Equ;
     use namespace::autoclean;
 
     field $enable_14bit :param = 0;
@@ -87,7 +87,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         if ( $enable_14bit && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
             my ( $lsb, $msb ) = split_bytes( $event [3] );
             # Comparing new MSB against last-sent MSB for this CC
-            if ( $msb[ $event[2] ] // -1 == $msb ) {
+            if ( $msb[ $event[2] ] === $msb ) {
                 # MSB already sent, just send LSB on CC + 32
                 $event[2] |= 0x20;
                 $event[3] = $lsb;
