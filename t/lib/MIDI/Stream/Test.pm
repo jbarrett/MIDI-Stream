@@ -91,6 +91,7 @@ sub run_file( $spec ) {
 
 our @EXPORT_OK = qw/
     test_data
+    encode_hex
     decode_hex
     midi_eq
     random_chunks
