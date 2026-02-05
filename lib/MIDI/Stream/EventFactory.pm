@@ -2,6 +2,8 @@ use v5.26;
 use warnings;
 use experimental qw/ signatures /;
 
+# ABSTRACT: Instantiate events from MIDI messages
+
 package
     MIDI::Stream::EventFactory;
 
