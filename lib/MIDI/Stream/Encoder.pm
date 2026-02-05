@@ -23,13 +23,13 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     field $running_status = 0;
     field $running_status_count = 0;
 
-    my method _flatten( $event ) {
+    my $_flatten = method( $event ) {
         my @keys = ( 'name', keys_for( $event->{ name } )->@* );
         my @e = $event->@{ @keys };
         [ $event->@{ @keys } ];
-    }
+    };
 
-    method _running_status( $status ) {
+    my $_running_status = method( $status ) {
         return $status unless $enable_running_status;
         # MIDI 1.0 Detailed Specification v4.2.1 p. 5
         # Data Types > Status Bytes > Running Status:
@@ -56,7 +56,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
         # Set and return status
         $running_status_count = 0;
         $running_status = $status;
-    }
+    };
 
     method clear_running_status {
         $running_status_count = 0;
@@ -64,7 +64,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
     }
 
     method encode( $event ) {
-        $event = $self->&_flatten( $event )
+        $event = $self->$_flatten( $event )
             if ref $event eq 'HASH';
         $event = $event->as_arrayref
             if eval{ $event->isa('MIDI::Stream::Event') };
@@ -128,7 +128,7 @@ class MIDI::Stream::Encoder :isa( MIDI::Stream ) {
 
         $status |= shift @event & 0xf if has_channel( $status );
 
-        $status = $self->&_running_status( $status );
+        $status = $self->$_running_status( $status );
         join '', map { chr } $status
             ? ( $status, @event )
             : @event

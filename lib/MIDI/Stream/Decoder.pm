@@ -51,7 +51,7 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         pop @events;
     }
 
-    my method _expand_cc( $event ) {
+    my $_expand_cc = method( $event ) {
         return $event unless is_cc( $event->[ 0 ] );
         return $event unless $enable_14bit;
         return $event if $event->[ 1 ] > 0x3f;
@@ -67,20 +67,20 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
          $cc[ $event->[ 1 ] ] = $event->[ 2 ];
          return;
-    }
+    };
 
-    my method _sample_clock() {
+    my $_sample_clock = method() {
         state $t = [ gettimeofday ];
         $clock_fifo->add( tv_interval( $t ) );
         $t = [ gettimeofday ];
-    }
+    };
 
-    my method _push_event( $event = undef ) {
+    my $_push_event = method( $event = undef ) {
         state $t = [ gettimeofday ];
         # Do not use a reference to @pending_event!
         # Contents will have changed by the time you get round to using it.
         $event //= [ @pending_event ];
-        $event = $self->&_expand_cc( $event );
+        $event = $self->$_expand_cc( $event );
         return unless $event;
         my $dt = tv_interval( $t );
         $t = [ gettimeofday ];
@@ -102,13 +102,13 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
         }
 
         $event_cb->( $stream_event );
-    }
+    };
 
-    my method _reset_pending_event( $status = undef ) {
+    my $_reset_pending_event = method( $status = undef ) {
         @pending_event = ();
         push @pending_event, $status if defined $status;
         $message_length = message_length( $status );
-    }
+    };
 
     method decode( $bytestring ) {
         my @bytes = unpack 'C*', $bytestring;
@@ -122,28 +122,28 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
                 my $status = shift @bytes;
 
                 # Sample the clock to determine tempo ASAP
-                $status == 0xf8 && $self->&_sample_clock;
+                $status == 0xf8 && $self->$_sample_clock();
 
                 # End-of-Xclusive
                 if ( $status == 0xf7 ) {
                     carp( "EOX received for non-SysEx message - ignoring!") && next BYTE
                         unless $pending_event[0] == 0xf0;
-                    $self->&_push_event;
-                    $self->&_reset_pending_event;
+                    $self->$_push_event();
+                    $self->$_reset_pending_event();
                     next BYTE;
                 }
 
                 # Real-Time messages can appear within other messages.
                 if ( is_realtime( $status ) ) {
                     # Push unless we have an undefined realtime status
-                    $self->&_push_event( [ $status ] ) unless $status == 0xf9 || $status == 0xfd;
+                    $self->$_push_event( [ $status ] ) unless $status == 0xf9 || $status == 0xfd;
                     next BYTE;
                 }
 
                 # Any non-Real-Time status byte ends a SysEx
                 # Push the pending sysex and proceed ...
                 if ( @pending_event && $pending_event[0] == 0xf0 ) {
-                    $self->&_push_event;
+                    $self->$_push_event();
                 }
 
                 # Undefined system statuses which should reset running status -
@@ -156,11 +156,11 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
                 # Should now be able to push any single-byte statuses,
                 # e.g. Tune request
                 if ( message_length( $status ) == 1 ) {
-                    $self->&_push_event( [ $status ] );
+                    $self->$_push_event( [ $status ] );
                     next BYTE;
                 }
 
-                $self->&_reset_pending_event( $status );
+                $self->$_reset_pending_event( $status );
                 next BYTE;
             } # end if status byte
 
@@ -172,8 +172,8 @@ class MIDI::Stream::Decoder :isa( MIDI::Stream ) {
 
             # A complete message denoted by length, not upcoming status bytes
             if ( $message_length && $remaining <= 0 ) {
-                $self->&_push_event;
-                $self->&_reset_pending_event( $pending_event[0] );
+                $self->$_push_event();
+                $self->$_reset_pending_event( $pending_event[0] );
             }
         } # end while
 
