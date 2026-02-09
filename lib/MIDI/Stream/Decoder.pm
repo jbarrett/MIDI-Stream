@@ -15,7 +15,6 @@ use Carp qw/ carp croak /;
 use MIDI::Stream::Tables qw/ is_cc is_realtime message_length combine_bytes /;
 use MIDI::Stream::FIFO;
 use MIDI::Stream::EventFactory;
-use Syntax::Operator::Equ;
 use namespace::autoclean;
 
 field $retain_events       :param = 1;
@@ -36,7 +35,7 @@ field @pending_event;
 field $message_length;
 
 method attach_callback( $event, $callback ) {
-    if ( reftype $event equ 'ARRAY' ) {
+    if ( reftype $event eq 'ARRAY' ) {
         $self->attach_callback( $_, $callback ) for $event->@*;
         return;
     }
@@ -102,7 +101,8 @@ my $_push_event = method( $event = undef ) {
     push @callbacks, ( $filter_cb->{ $stream_event->name } // [] )->@*;
 
     for my $cb ( @callbacks ) {
-        last unless $cb->( $dt, $stream_event ) equ $self->continue;
+        no warnings 'uninitialized';
+        last unless $cb->( $dt, $stream_event ) eq $self->continue;
     }
 
     $event_cb->( $stream_event );
