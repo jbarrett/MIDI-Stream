@@ -1,5 +1,5 @@
 use Test2::V0;
-use Test::Mock::Time;
+use Test::Time::HiRes;
 
 use Time::HiRes qw/ usleep /;
 use MIDI::Stream::Decoder;
