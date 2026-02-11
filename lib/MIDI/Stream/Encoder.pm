@@ -18,7 +18,7 @@ use MIDI::Stream::Tables qw/
 /;
 use namespace::autoclean;
 
-field $enable_14bit :param = 0;
+field $enable_14bit_cc :param = 0;
 field $enable_running_status :param = 0;
 field $running_status_retransmit :param = 10;
 
@@ -90,7 +90,7 @@ method encode( $event ) {
         }
     }
 
-    if ( $enable_14bit && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
+    if ( $enable_14bit_cc && $event[0] eq 'control_change' && $event[2] < 0x20 ) {
         my ( $lsb, $msb ) = split_bytes( $event [3] );
         # Comparing new MSB against last-sent MSB for this CC
         if ( ( $msb[ $event[2] ] // -1 ) == $msb ) {

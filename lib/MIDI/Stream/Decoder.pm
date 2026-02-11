@@ -17,9 +17,9 @@ use MIDI::Stream::FIFO;
 use MIDI::Stream::EventFactory;
 use namespace::autoclean;
 
-field $retain_events       :param = 1;
+field $retain_events :param = 1;
 
-field $enable_14bit :param = 0;
+field $enable_14bit_cc :param = 0;
 field @cc;
 
 field $event_cb :param = sub { @_ };
@@ -56,7 +56,7 @@ method fetch_one_event {
 
 my $_expand_cc = method( $event ) {
     return $event unless is_cc( $event->[ 0 ] );
-    return $event unless $enable_14bit;
+    return $event unless $enable_14bit_cc;
     return $event if $event->[ 1 ] > 0x3f;
     return $event if $event->[ 2 ] > 0x7f;
 
