@@ -274,19 +274,19 @@ method clear_running_status {
 
 =over
 
-=item note_off - channel note velocity
+=item note_off - channel, note, velocity
 
-=item note_on - channel note velocity
+=item note_on - channel, note, velocity
 
-=item polytouch - channel note pressure
+=item polytouch - channel, note, pressure
 
-=item control_change - channel control value
+=item control_change - channel, control, value
 
-=item program_change - channel program
+=item program_change - channel, program
 
-=item aftertouch - channel pressure
+=item aftertouch - channel, pressure
 
-=item pitch_bend - channel value
+=item pitch_bend - channel, value
 
 =item song_position - position
 

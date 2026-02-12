@@ -67,7 +67,6 @@ instance.
 
 our $VERSION = 0.00;
 
-use Scalar::Util qw/ reftype /;
 use Time::HiRes qw/ gettimeofday tv_interval /;
 use Carp qw/ carp croak /;
 use MIDI::Stream::Tables qw/ is_cc is_realtime message_length combine_bytes /;
@@ -184,7 +183,7 @@ my $_push_event = method( $event = undef ) {
 
     for my $cb ( @callbacks ) {
         no warnings 'uninitialized';
-        last if $cb->( $dt, $stream_event ) eq $self->stop;
+        last if $cb->( $stream_event ) eq $self->stop;
     }
 
     $callback->( $stream_event );
@@ -302,12 +301,15 @@ Any number of callbacks may be attached to an event. They will be executed in
 the order they were attached. Should you wish to stop processing further
 callbacks for the given event, your callback should return $decoder->stop.
 
-A special event 'all' will respond to all event types.
+A special event 'all' will respond to all event types. These callbacks will
+be called before the global callback, if one was passed to the constructor.
+If set, the global callback will always be called no matter the return value
+of attached event callbacks.
 
 =cut
 
 method attach_callback( $event, $callback ) {
-    if ( reftype $event eq 'ARRAY' ) {
+    if ( ref $event eq 'ARRAY' ) {
         $self->attach_callback( $_, $callback ) for $event->@*;
         return;
     }
@@ -333,7 +335,7 @@ method cancel_event_callback( $event ) {
 
 =head2 cancel_callback
 
-Cancels the "main" callback, the one passed in the constructor parameter
+Cancels the global callback, the one passed in the constructor parameter
 'callback'.
 
 B<NB> This operation cannot be undone!
