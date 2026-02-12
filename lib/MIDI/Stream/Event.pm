@@ -60,6 +60,10 @@ use namespace::autoclean;
 
 Returns a new event instance. Options:
 
+=head3 dt
+
+Dela-time
+
 =head3 message
 
 MIDI byte array
