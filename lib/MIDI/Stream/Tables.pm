@@ -4,6 +4,22 @@ package MIDI::Stream::Tables;
 
 # ABSTRACT: MIDI 1.0 look up tables and utility functions
 
+=encoding UTF-8
+
+=head1 SYNOPSIS
+
+    use MIDI::Stream::Tables qw/ split_bytes /;
+
+    my ( $lsb, $msb ) = split_bytes( 0x1e2f );
+
+=head1 DESCRIPTION
+
+MIDI::Stream::Tables is a set of data and functions for encoding, decoding, and
+manipulating MIDI messages and events. It is intended for use in
+L<MIDI::Stream> and related libraries.
+
+=cut
+
 our $VERSION = 0.00;
 
 use parent 'Exporter';
@@ -58,19 +74,70 @@ my $event_keys = {
     sysex          => [qw/ msg /],
 };
 
+=head1 FUNCTIONS
+
+=head2 keys_for
+
+    my $keys = keys_for( 'control_change' );
+
+Returns key/accessor names for the given event name.
+
+=cut
+
 sub keys_for {
     $event_keys->{ $_[0] } // [];
 }
+
+=head2 status_name
+
+    my $name = status_name( 0x83 );
+
+Returns the event name for the given status.
+
+=cut
 
 sub status_name {
     $name{ $_[0] & 0xf0 } // $fname{ $_[0] };
 }
 
+=head2 status_byte
+
+    my $status = status_byte( 'clock' );
+
+Returns the status byte corresponding to the event name.
+
+=cut
+
 sub status_byte { $status{ $_[0] } // $fstatus{ $_[0] } }
+
+=head2 is_realtime
+
+    act_now( $byte ) if is_realtime( $byte );
+
+Returns whether the given byte is in the realtime range.
+
+=cut
 
 sub is_realtime { $_[0] > 0xf7 }
 
+=head2 is_single_byte
+
+    my $sb = is_single_byte( 0xfa )
+
+Returns whether the given byte represents a single-byte message, e.g. 'clock',
+'tune_request'.
+
+=cut
+
 sub is_single_byte { $_[0] > 0xf5 }
+
+=head2 message_length
+
+    my $len = message_length( 0x9f );
+
+Returns the expected message length for the given status byte.
+
+=cut
 
 sub message_length {
     my ( $status ) = @_;
@@ -90,22 +157,58 @@ sub message_length {
     return 1 if $status > 0xf5;
 }
 
+=head2 is_status_byte
+
+    new_status( $byte ) if is_status_byte( $byte );
+
+Returns whether the given byte is a status byte.
+
+=cut
+
 sub is_status_byte { $_[0] & 0x80 }
 
+=head2 has_channel
+
+    new_channel_status( $byte ) if has_channel( $byte );
+
+Returns whether the given byte represents a channel status.
+
+=cut
+
 sub has_channel { $_[0] < 0xf0 }
+
+=head2 is_cc
+
+    do_cc( $byte ) if is_cc( $byte );
+
+Returns whether the given byte is a control change status.
+
+=cut
 
 sub is_cc {
     ( $_[0] & 0xf0 ) == 0xb0;
 }
 
-sub is_pitch_bend {
-    ( $_[0] & 0xf0 ) == 0xe0;
-}
+=head2 combine_bytes
+
+    my $value_14bit = combine_bytes( $lsb, $msb );
+
+Combine MSB/LSB pair into a 14-bit value.
+
+=cut
 
 sub combine_bytes {
     my ( $lsb, $msb ) = @_;
     $msb << 7 | $lsb & 0x7f;
 }
+
+=head2 split_bytes
+
+    my ( $lsb, $msb ) = split_bytes( $value_14bit );
+
+Split a 14-bit value into a MSB/LSB pair.
+
+=cut
 
 sub split_bytes {
     my ( $value ) = @_;
