@@ -252,6 +252,7 @@ method decode( $bytestring ) {
             # Should now be able to push any single-byte statuses,
             # e.g. Tune request
             if ( message_length( $status ) == 1 ) {
+                @pending_event = ();
                 $self->$_push_event( [ $status ] );
                 next BYTE;
             }
