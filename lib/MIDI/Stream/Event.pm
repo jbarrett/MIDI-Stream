@@ -17,6 +17,7 @@ use namespace::autoclean;
 
 field $name :reader;
 field $message :reader :param;
+field $dt :reader :param;
 field $bytes;
 field $status :reader;
 

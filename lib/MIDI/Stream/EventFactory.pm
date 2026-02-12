@@ -20,13 +20,13 @@ require MIDI::Stream::Event::TimeCode;
 require MIDI::Stream::Event::SongPosition;
 require MIDI::Stream::Event::SongSelect;
 
-sub event( $class, $message ) {
+sub event( $class, $dt, $message ) {
     my $status = $message->[0];
     return if $status < 0x80;
 
     my sub instance( $name = undef ) {
         my $class = 'MIDI::Stream::Event' . ( $name ? "::$name" : '' );
-        $class->new( message => $message );
+        $class->new( dt => $dt, message => $message );
     }
 
     # Single byte status
