@@ -359,7 +359,7 @@ method events {
 
 =head2 fetch_one_event
 
-Returns a single pending event from the event queue.
+Returns the next pending event from the event queue.
 
 =cut
 

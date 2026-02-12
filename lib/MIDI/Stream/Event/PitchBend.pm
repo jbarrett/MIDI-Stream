@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Pitch Bend event.
+Class representing a Pitch Bend event.
 
 =cut
 

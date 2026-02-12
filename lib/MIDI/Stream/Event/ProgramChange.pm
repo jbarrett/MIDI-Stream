@@ -6,7 +6,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Program Change event.
+Class representing a Program Change event.
 
 =cut
 

@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Note On or Note Off event.
+Class representing a Note On or Note Off event.
 
 =cut
 

@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Time Code event.
+Class representing a Time Code event.
 
 =cut
 

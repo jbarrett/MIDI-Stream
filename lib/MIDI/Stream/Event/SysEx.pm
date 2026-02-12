@@ -11,7 +11,7 @@ class MIDI::Stream::Event::SysEx :isa( MIDI::Stream::Event );
 
 =head1 DESCRIPTION
 
-Class represeting a SysEx message.
+Class representing a SysEx message.
 
 =cut
 

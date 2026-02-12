@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Polyphonic After Touch event.
+Class representing a Polyphonic After Touch event.
 
 =cut
 

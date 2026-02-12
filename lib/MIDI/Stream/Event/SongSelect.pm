@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Song Position Pointer event.
+Class representing a Song Position Pointer event.
 
 =cut
 

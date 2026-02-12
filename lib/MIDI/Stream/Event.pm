@@ -60,10 +60,6 @@ use namespace::autoclean;
 
 Returns a new event instance. Options:
 
-=head3 dt
-
-Dela-time
-
 =head3 message
 
 MIDI byte array
@@ -78,7 +74,7 @@ Dela-time - time since the previous event was seen.
 
 =head2 message
 
-The original message passed to the constructor.
+The original message byte array passed to the constructor.
 
 =cut
 
@@ -123,7 +119,7 @@ method TO_JSON { $self->as_hashref };
 
 =head2 as_arrayref
 
-Array representation of the event, in name => @parameters form.
+Array representation of the event, in C<[ name => @parameters ]> form.
 
 =cut
 

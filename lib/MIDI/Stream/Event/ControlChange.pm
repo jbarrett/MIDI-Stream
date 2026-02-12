@@ -8,7 +8,7 @@ use Feature::Compat::Class;
 
 =head1 DESCRIPTION
 
-Class represeting a Control Change event.
+Class representing a Control Change event.
 
 =cut
 

@@ -24,9 +24,9 @@ consume or generate multiple streams in a single instance could result in
 partial message collision. running status confusion, or inaccurate tempo
 measurement - there are no MIDI-merge facilities.
 
-For turning midi bytestreams into usable events see L<MIDI::Stream::Encoder>.
+For turning midi bytestreams into usable events see L<MIDI::Stream::Decoder>.
 
 For turning performance and system events into a MIDI bytes suitable for
-passing to MIDI hardware and other MIDI software see L<MIDI::Stream::Decoder>.
+passing to MIDI hardware and other MIDI software see L<MIDI::Stream::Encoder>.
 
 =cut
