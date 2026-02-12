@@ -7,6 +7,64 @@ use Feature::Compat::Class;
 package MIDI::Stream::Decoder;
 class MIDI::Stream::Decoder :isa( MIDI::Stream );
 
+=encoding UTF-8
+
+=head1 SYNOPSIS
+
+Using a callback for event-driven operation:
+
+    use MIDI::Stream::Decoder;
+
+    my $decoder = MIDI::Stream::Decoder->new(
+        retain_events => false,
+        callback => sub( $event ) {
+            # Handle MIDI::Stream::Event $event
+        }
+    );
+
+    # Callbacks can respond to individual event types
+    $decoder->attach_callback(
+        [ qw/ note_off note_on / ] => sub( $event ) {
+            # Handle MIDI::Stream::Event::Note $event
+        }
+    );
+
+    # Your favourite MIDI input library goes here ...
+    while ( my $msg = await $some_midi_device->receive ) {
+        $decoder->decode( $msg );
+    }
+
+Procedural approach:
+
+    use MIDI::Stream::Decoder;
+
+    my $decoder = MIDI::Stream::Decoder->new(
+        retain_events => true,
+    );
+
+    while ( my $msg = $some_midi_device->receive ) {
+        if ( $decoder->decode( $msg ) ) {
+            my @events = $decoder->events;
+            # Handle MIDI::Stream::Event @events
+        }
+    }
+
+=head1 DESCRIPTION
+
+MIDI::Stream::Decoder provides realtime MIDI stream decoding facilities. It
+supports running-status, 14-bit CC, and all basic channel, system common, and
+realtime messages.
+
+MIDI::Stream::Decoder is a stateful class. A new instance should be created
+for each target MIDI port, device or stream.
+
+Two main modes of operation are provided, a procedural mode where events are
+retrieved by-hand, and an event-driven mode where events are passed to
+callbacks as they arrive. Callbacks receive a L<MIDI::Stream::Event>
+instance.
+
+=cut
+
 our $VERSION = 0.00;
 
 use Scalar::Util qw/ reftype /;
@@ -17,12 +75,56 @@ use MIDI::Stream::FIFO;
 use MIDI::Stream::EventFactory;
 use namespace::autoclean;
 
+=head1 METHODS
+
+=head2 new
+
+    my $decoder = MIDI::Stream::Decoder->new( %options );
+
+Returns a new decoder instance. Options:
+
+=head3 retain_events
+
+Store decoded events for later retrieval. This should be set to true if using
+the procedural interface, or wish to hold events in memory for any other
+purpose. Retaining events is not required for the callback interface.
+
+The default value is true.
+
+=head3 enable_14bit_cc
+
+Enable decoding of 14-bit CC values for the lower 32 CCs. This option will
+combine CC MSB/LSB values to a single 14-bit value, assigned to the lower (MSB)
+CC.
+
+The default value is false.
+
+=head3 round_tempo
+
+This module will use the timing of incoming clock events to derive a tempo, or BPM. This option will force tempo to be rounded to the nearest whole number.
+
+The default value is false.
+
+=head3 clock_samples
+
+The number of clock events to sample when deriving tempo.
+
+The default value is 24.
+
+=head3 clock_ppqn
+
+The PPQN value of the incoming clock. This is probably 24.
+
+The default value is 24.
+
+=cut
+
 field $retain_events :param = 1;
 
 field $enable_14bit_cc :param = 0;
 field @cc;
 
-field $event_cb :param = sub { @_ };
+field $callback :param = sub { @_ };
 field $filter_cb = {};
 
 field $clock_ppqn :param = 24;
@@ -33,26 +135,6 @@ field $round_tempo :param = 0;
 field @events;
 field @pending_event;
 field $message_length;
-
-method attach_callback( $event, $callback ) {
-    if ( reftype $event eq 'ARRAY' ) {
-        $self->attach_callback( $_, $callback ) for $event->@*;
-        return;
-    }
-    push $filter_cb->{ $event }->@*, $callback;
-}
-
-method cancel_callbacks( $event ) {
-    delete $filter_cb->{ $event };
-}
-
-method events {
-    splice @events;
-}
-
-method fetch_one_event {
-    pop @events;
-}
 
 my $_expand_cc = method( $event ) {
     return $event unless is_cc( $event->[ 0 ] );
@@ -88,7 +170,7 @@ my $_push_event = method( $event = undef ) {
     my $dt = tv_interval( $t );
     $t = [ gettimeofday ];
 
-    my $stream_event = MIDI::Stream::EventFactory->event( $event );
+    my $stream_event = MIDI::Stream::EventFactory->event( $dt, $event );
 
     if ( !$stream_event ) {
         carp( "Ignoring unknown status $event->[0]" );
@@ -102,10 +184,10 @@ my $_push_event = method( $event = undef ) {
 
     for my $cb ( @callbacks ) {
         no warnings 'uninitialized';
-        last unless $cb->( $dt, $stream_event ) eq $self->continue;
+        last if $cb->( $dt, $stream_event ) eq $self->stop;
     }
 
-    $event_cb->( $stream_event );
+    $callback->( $stream_event );
 };
 
 my $_reset_pending_event = method( $status = undef ) {
@@ -113,6 +195,17 @@ my $_reset_pending_event = method( $status = undef ) {
     push @pending_event, $status if defined $status;
     $message_length = message_length( $status );
 };
+
+=head2 decode
+
+    my $pending_count = $decoder->decode( $midi_bytes );
+    $decoder->decode( $midi_bytes );
+
+Decodes any MIDI messages in the passed string. Returns the number of
+pending events if retain_events is enabled. Any callbacks associated with
+the decoded events will be invoked.
+
+=cut
 
 method decode( $bytestring ) {
     my @bytes = unpack 'C*', $bytestring;
@@ -184,13 +277,105 @@ method decode( $bytestring ) {
     scalar @events;
 }
 
+=head2 attach_callback
+
+    $decoder->attach_callback( $event, $callback );
+
+    $decoder->attach_callback(
+        control_change => sub( $event ) {
+            ...
+            $decoder->stop;
+        }
+    );
+
+    $decoder->attach_callback(
+        [ qw/ note_on note_off / ] => sub( $event ) {
+            ...
+            $decoder->continue;
+        }
+    );
+
+Attaches the given callback to the specified event type. Multiple event types
+may be bound by setting $event to be an arrayref of event types.
+
+Any number of callbacks may be attached to an event. They will be executed in
+the order they were attached. Should you wish to stop processing further
+callbacks for the given event, your callback should return $decoder->stop.
+
+A special event 'all' will respond to all event types.
+
+=cut
+
+method attach_callback( $event, $callback ) {
+    if ( reftype $event eq 'ARRAY' ) {
+        $self->attach_callback( $_, $callback ) for $event->@*;
+        return;
+    }
+    push $filter_cb->{ $event }->@*, $callback;
+}
+
+=head2 cancel_event_callback
+
+    $decoder->cancel_event_callback( $event );
+
+Cancels the callbacks associated with the given event name.
+As with attach_callback, $event may be an arrayref of event names.
+
+=cut
+
+method cancel_event_callback( $event ) {
+    if ( reftype $event eq 'ARRAY' ) {
+        $self->cancel_event_callbacks( $_ ) for $event->@*;
+        return;
+    }
+    delete $filter_cb->{ $event };
+}
+
+=head2 cancel_callback
+
+Cancels the "main" callback, the one passed in the constructor parameter
+'callback'.
+
+B<NB> This operation cannot be undone!
+
+=cut
+
+method cancel_callback {
+    undef $callback;
+}
+
+=head2 events
+
+Return all pending events. This clears the event queue.
+
+=cut
+
+method events {
+    splice @events;
+}
+
+=head2 fetch_one_event
+
+Returns a single pending event from the event queue.
+
+=cut
+
+method fetch_one_event {
+    pop @events;
+}
+
+=head2 tempo
+
+Return the current tempo/BPM, based on incoming clock events.
+
+=cut
+
 method tempo {
     my $tempo = 60 / ( $clock_fifo->average * $clock_ppqn );
     $round_tempo ? sprintf( '%.0f', $tempo ) : $tempo;
 }
 
-method encode_events( @events ) {
-    join '', map { $self->single_event( $_ ) } @events;
-}
+method continue { MIDI::Stream::Tables::continue() }
+method stop { MIDI::Stream::Tables::stop() }
 
 1;

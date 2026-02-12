@@ -7,6 +7,57 @@ use Feature::Compat::Class;
 package MIDI::Stream::Encoder;
 class MIDI::Stream::Encoder :isa( MIDI::Stream );
 
+=encoding UTF-8
+
+=head1 SYNOPSIS
+
+    use MIDI::Stream::Encoder;
+
+    my $encoder = MIDI::Stream::Encoder->new(
+        enable_14bit_cc => true,
+        enable_running_status => false
+    );
+
+    # Middle C to channel 9, max velocity
+    my $midi_bytes = $encoder->encode( [ note_on => 0x9, 0x3c, 0x7f ] );
+
+    # 14-bit value 6704 for CCs 19 and 51 on channel 15
+    $midi_bytes .= $encoder->encode( [ control_change => 0xf, 0x12, 0x1a30 ] );
+
+    # Encode MIDI::Stream::Event back to bytes
+    $midi_bytes .= $encoder->encode( $midi_stream_event );
+
+    # Your favourite output MIDI library goes here ...
+    $some_midi_device->send( $midi_bytes );
+
+=head1 DESCRIPTION
+
+MIDI::Stream::Encoder provides realtime MIDI stream encoding facilities.  It
+supports running-status, 14-bit CC, and all basic channel, system common, and
+realtime messages.
+
+MIDI::Stream::Encoder is a stateful class. A new instance should
+be created for each target MIDI port, device or stream.
+
+There is no explicit support for many extended sequences. This includes, but is
+not limited to, MPE, (N)RPN, Bank/Program Select, Channel Modes, Song Position,
+Advanced SysEx operations, or TimeCode/Quarter frame messages.
+
+The arrayref form of encode(), by design, allows for additional bytes to be
+appended to the message. For example, a complete bank select may be constructed
+as follows:
+
+    $encoder->encode( [ control_change => 0, 0, $msb, 32, $lsb );
+
+You might also use this to encode multiple note messages for block chords:
+
+    # C-Major
+    $encoder->encode( [ note_on => 0x2, 0x3c, 0x60,
+                                        0x40, 0x46,
+                                        0x43, 0x3f ] );
+
+=cut
+
 our $VERSION = 0.00;
 
 use Time::HiRes qw/ gettimeofday tv_interval /;
@@ -18,6 +69,48 @@ use MIDI::Stream::Tables qw/
 /;
 use namespace::autoclean;
 
+=head1 METHODS
+
+=head2 new
+
+    my $encoder = MIDI::Stream::Encoder->new( %options );
+
+Returns a new encoder instance. Options:
+
+=head3 enable_running_status
+
+Enables running-status. Running status skips retransmitting status (e.g. "note
+on" for channel 7) if it has not changed between messages. This is recommended
+when communicating with external MIDI hardware, especially if over DIN or TRS.
+
+This is disabled by default.
+
+=head3 running_status_retransmit
+
+In case a receiver misses a status, it is recommended status is retransmitted
+every so often. This value controls how often this occurs. If the count of a
+run of same-status messages exceeds the configured threshold, the status is
+sent again, and the count is reset.
+
+This has no effect if enable_running_status is false. The default value is 10.
+
+=head3 enable_14bit_cc
+
+Enables encoding of 14bit CC values for the lower 32 CCs. Ordinarily this would
+require separate messages be constructed for the CC's MSB and its corresponding
+LSB.
+
+For example, with enable_14bit_cc = true:
+
+    $encoder->encode( [ control_change => 7, 2, 8190 ] );
+
+...will encode a control change for Channel 7, CC 2 = 63 (the MSB), and a control
+change for Channel 7, CC 34 = 126 (the LSB).
+
+This is disabled by default.
+
+=cut
+
 field $enable_14bit_cc :param = 0;
 field $enable_running_status :param = 0;
 field $running_status_retransmit :param = 10;
@@ -25,9 +118,6 @@ field $running_status_retransmit :param = 10;
 field @msb;
 field $running_status = 0;
 field $running_status_count = 0;
-
-method continue { MIDI::Stream::Tables::continue() }
-method stop { MIDI::Stream::Tables::stop() }
 
 my $_flatten = method( $event ) {
     my @keys = ( 'name', keys_for( $event->{ name } )->@* );
@@ -64,10 +154,27 @@ my $_running_status = method( $status ) {
     $running_status = $status;
 };
 
-method clear_running_status {
-    $running_status_count = 0;
-    $running_status = 0;
-}
+=head2 encode
+
+    my $midi_bytes = $encoder->encode( $arrayref );
+    my $midi_bytes = $encoder->encode( $hashref );
+    my $midi_bytes = $encoder->encode( $midi_stream_event );
+
+Encodes the provided event to MIDI bytes. This event may be an arrayref with
+named event plus its parameters, a hashref with all event parameters named
+(See L</Events and Parameters>), or an instance of L<MIDI::Stream::Event>.
+
+The arrayref parameter allows for additional bytes to be appended to the event
+(just bytes, not additional named events - see L<encode_events> for a way to
+encode multiple different events in a single call). For example, to encode a
+block chord:
+
+    # C-Minor
+    my $midi = $encoder->encode( [ note_on => 0x2, 0x3c, 0x60,
+                                                   0x3f, 0x46,
+                                                   0x43, 0x3f ] );
+
+=cut
 
 method encode( $event ) {
     $event = $self->$_flatten( $event )
@@ -140,8 +247,73 @@ method encode( $event ) {
         : @event
 }
 
+=head2 encode_events
+
+    $encoder->encode_events( $arrayref, $hashref, $midi_stream_event );
+
+Encode multiple events. Returns a single MIDI byte string.
+
+=cut
+
 method encode_events( @events ) {
     join '', map { $self->encode( $_ ) } @events;
 }
+
+=head2 clear_running_status
+
+Explicitly clear the current running status and retransmit counter.
+
+=cut
+
+method clear_running_status {
+    $running_status_count = 0;
+    $running_status = 0;
+}
+
+=head1 Events and Parameters
+
+=over
+
+=item note_off - channel note velocity
+
+=item note_on - channel note velocity
+
+=item polytouch - channel note pressure
+
+=item control_change - channel control value
+
+=item program_change - channel program
+
+=item aftertouch - channel pressure
+
+=item pitch_bend - channel value
+
+=item song_position - position
+
+=item song_select - song
+
+=item timecode - byte
+
+=item sysex - msg
+
+=item tune_request
+
+=item eox
+
+=item clock
+
+=item start
+
+=item continue
+
+=item stop
+
+=item active_sensing
+
+=item system_reset
+
+=back
+
+=cut
 
 1;
