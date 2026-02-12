@@ -2,12 +2,38 @@ use v5.26;
 use warnings;
 use Feature::Compat::Class;
 
-# ABSTRACT: MIDI Time Code Qtr. Frame Event
+# ABSTRACT: Time Code Qtr. Frame event class
+
+=encoding UTF-8
+
+=head1 DESCRIPTION
+
+Class represeting a Time Code event.
+
+=cut
 
 package MIDI::Stream::Event::TimeCode;
 class MIDI::Stream::Event::TimeCode :isa( MIDI::Stream::Event );
 
 our $VERSION = 0.00;
+
+=head1 METHODS
+
+All methods in L<MIDI::Stream::Event>, plus:
+
+=head2 byte
+
+The original timecode byte
+
+=head2 high
+
+Timecode high nibble
+
+=head2 low
+
+Timecode low nibble
+
+=cut
 
 field $byte :reader;
 field $high;
