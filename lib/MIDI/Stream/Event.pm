@@ -1,67 +1,144 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::Event;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI event base class
 
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
+=encoding UTF-8
 
-use Feature::Compat::Class;
+=head1 DESCRIPTION
+
+Base class for encapsulation of MIDI events parsed by L<MIDI::Stream::Decoder>.
+An instance of this class will represent any single byte status, e.g. clock,
+active_sensing.
+
+See subclass documentation for additional information on multi-byte events:
+
+=over
+
+=item L<MIDI::Stream::Event::AfterTouch>
+
+=item L<MIDI::Stream::Event::ControlChange>
+
+=item L<MIDI::Stream::Event::Note>
+
+=item L<MIDI::Stream::Event::PitchBend>
+
+=item L<MIDI::Stream::Event::PolyTouch>
+
+=item L<MIDI::Stream::Event::ProgramChange>
+
+=item L<MIDI::Stream::Event::SongPosition>
+
+=item L<MIDI::Stream::Event::SongSelect>
+
+=item L<MIDI::Stream::Event::SysEx>
+
+=item L<MIDI::Stream::Event::TimeCode>
+
+=back
+
+=cut
+
 use experimental qw/ signatures /;
 
 package MIDI::Stream::Event;
+class MIDI::Stream::Event;
 
-class MIDI::Stream::Event {
-    use Carp qw/ croak /;
-    use MIDI::Stream::Tables qw/ status_name keys_for /;
-    use Module::Load;
-    use namespace::autoclean;
+our $VERSION = 0.00;
 
-    field $name :reader;
-    field $message :reader :param;
-    field $bytes;
-    field $status :reader;
+use Carp qw/ croak /;
+use MIDI::Stream::Tables qw/ status_name keys_for /;
+use namespace::autoclean;
 
-    method bytes {
-        $bytes //= join '', map { chr } $message->@*;
-    }
+=head1 METHODS
 
-    sub event( $class, $message ) {
-        my $status = $message->[0];
-        return if $status < 0x80;
+=head2 new
 
-        my sub instance( $name ) {
-            my $class = __PACKAGE__ . ( $name ? "::$name" : '' );
-            load $class;
-            $class->new( message => $message );
-        }
+    my $event = MIDI::Stream::Event->new( dt => $time, message => $midi_bytes_arrayref );
+    my $event = MIDI::Stream::Event->new( dt => 0, message => [ 0xfe ] );
 
-        # Single byte status
-        return instance() if $status > 0xf7;
+Returns a new event instance. Options:
 
-        # Channel events
-        return instance( 'Note' )           if $status < 0xa0;
-        return instance( 'PolyTouch' )      if $status < 0xb0;
-        return instance( 'ControlChange' )  if $status < 0xc0;
-        return instance( 'ProgramChange' )  if $status < 0xd0;
-        return instance( 'AfterTouch' )     if $status < 0xe0;
-        return instance( 'PitchBend' )      if $status < 0xf0;
-    }
+=head3 dt
 
-    method TO_JSON {
-        +{
-            map { $_ => $self->$_ }
-                ( 'name', keys_for( $self->name )->@* )
-        };
-    }
+Dela-time
 
-    ADJUST {
-        $name = status_name( $message->[0] ) // 'unknown';
-        $status = $message->[0];
-        # note on with velocity 0 is note off
-        $name = 'note_off' if $status < 0xa0 && !$message->[2];
-    }
+=head3 message
+
+MIDI byte array
+
+=head2 name
+
+The event name, e.g. 'note_on'
+
+=head2 dt
+
+Dela-time - time since the previous event was seen.
+
+=head2 message
+
+The original message passed to the constructor.
+
+=cut
+
+field $name :reader;
+field $message :reader :param;
+field $dt :reader :param;
+field $bytes;
+field $status :reader;
+
+=head2 bytes
+
+String representation of message.
+
+=cut
+
+method bytes {
+    $bytes //= join '', map { chr } $message->@*;
+}
+
+=head2 as_hashref
+
+Hash representation of the event. See L<MIDI::Stream::Encoder/Events and
+Parameters> for keys you should expect in the hash for a given event. The event
+name is accessible under the key 'name'.
+
+=cut
+
+method as_hashref {
+    +{
+        map { $_ => $self->$_ }
+            ( 'name', keys_for( $self->name )->@* )
+    };
+}
+
+=head2 TO_JSON
+
+Alias for as_hashref.
+
+=cut
+
+method TO_JSON { $self->as_hashref };
+
+=head2 as_arrayref
+
+Array representation of the event, in name => @parameters form.
+
+=cut
+
+method as_arrayref {
+    [
+        $self->name =>
+        map { $self->$_ } keys_for( $self->name )->@*
+    ]
+}
+
+ADJUST {
+    $name = status_name( $message->[0] ) // 'unknown';
+    $status = $message->[0];
+    # note on with velocity 0 is note off
+    $name = 'note_off' if $status < 0xa0 && !$message->[2];
 }
 
 1;

@@ -1,31 +1,31 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream::FIFO;
+use Feature::Compat::Class;
 
 # ABSTRACT: Fixed Size FIFO/Queue for rolling averages
 
-use v5.26;
-use Feature::Compat::Class;
+package MIDI::Stream::FIFO;
+class MIDI::Stream::FIFO;
 
-class MIDI::Stream::FIFO {
-    use List::Util qw/ reduce /;
-    use namespace::autoclean;
+our $VERSION = 0.00;
 
-    field $length :param = 24;
-    field $members = [];
+use List::Util qw/ reduce /;
+use namespace::autoclean;
 
-    field $average;
+field $length :param = 24;
+field $members = [];
 
-    method add( $member ) {
-        $average = undef;
-        unshift $members->@*, $member;
-        splice $members->@*, $length if $members->@* > $length;
-    }
+field $average;
 
-    method average {
-        return 0 unless $members->@*;
-        $average //= ( reduce { $a + $b } $members->@* ) / $members->@*;
-    }
+method add( $member ) {
+    undef $average;
+    unshift $members->@*, $member;
+    splice $members->@*, $length if $members->@* > $length;
+}
+
+method average {
+    return 0 unless $members->@*;
+    $average //= ( reduce { $a + $b } $members->@* ) / $members->@*;
 }
 
 1;

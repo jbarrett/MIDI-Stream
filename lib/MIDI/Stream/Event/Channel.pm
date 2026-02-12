@@ -1,20 +1,36 @@
-use strict;
-use warnings;
-package MIDI::Stream::Event::Channel;
-
-# ABSTRACT: MIDI channel event base class
-
 use v5.26;
+use warnings;
 use Feature::Compat::Class;
 
+# ABSTRACT: MIDI channel event base class
+#
+=encoding UTF-8
+
+=head1 DESCRIPTION
+
+Channel message base class.
+
+=cut
+
 package MIDI::Stream::Event::Channel;
+class MIDI::Stream::Event::Channel :isa( MIDI::Stream::Event );
 
-class MIDI::Stream::Event::Channel :isa( MIDI::Stream::Event ) {
-    field $channel :reader;
+our $VERSION = 0.00;
 
-    ADJUST {
-        $channel = $self->message->[0] & 0x0f;
-    }
+=head1 METHODS
+
+All methods in L<MIDI::Stream::Event>, plus:
+
+=head2 channel
+
+Event channel.
+
+=cut
+
+field $channel :reader;
+
+ADJUST {
+    $channel = $self->message->[0] & 0x0f;
 }
 
 1;

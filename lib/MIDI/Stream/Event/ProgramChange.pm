@@ -1,20 +1,34 @@
-use strict;
-use warnings;
-package MIDI::Stream::Event::ProgramChange;
-
-# ABSTRACT: MIDI note class
-
 use v5.26;
+use warnings;
 use Feature::Compat::Class;
 
-class MIDI::Stream::Event::ProgramChange
-    :isa( MIDI::Stream::Event::Channel ) {
+# ABSTRACT: Program Change event class
 
-    field $program :reader;
+=head1 DESCRIPTION
 
-    ADJUST {
-        $program = $self->message->[1];
-    }
+Class represeting a Program Change event.
+
+=cut
+
+package MIDI::Stream::Event::ProgramChange;
+class MIDI::Stream::Event::ProgramChange :isa( MIDI::Stream::Event::Channel );
+
+our $VERSION = 0.00;
+
+=head1 METHODS
+
+All methods in L<MIDI::Stream::Event::Channel>, plus:
+
+=head2 program
+
+Program number
+
+=cut
+
+field $program :reader;
+
+ADJUST {
+    $program = $self->message->[1];
 }
 
 1;

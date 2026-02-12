@@ -62,7 +62,7 @@ sub random_chunks {
 }
 
 sub run_encoding_tests( $data, $params = {} ) {
-    my $encoder = MIDI::Stream::Encoder->new;
+    my $encoder = MIDI::Stream::Encoder->new( $params->%* );
     for my $test ( $data->{ tests }->@* ) {
         my $midi = $encoder->encode_events( $test->{ data }->@* );
         is( encode_hex( $midi ), $test->{expect}, "$test->{description}" );
@@ -91,6 +91,7 @@ sub run_file( $spec ) {
 
 our @EXPORT_OK = qw/
     test_data
+    encode_hex
     decode_hex
     midi_eq
     random_chunks

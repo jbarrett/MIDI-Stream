@@ -1,41 +1,32 @@
-use strict;
+use v5.26;
 use warnings;
-package MIDI::Stream;
+use Feature::Compat::Class;
 
 # ABSTRACT: MIDI bytestream decoding and encoding
 
-use v5.26;
-our @CARP_NOT = (__PACKAGE__);
+package MIDI::Stream;
+class MIDI::Stream;
 
-use Feature::Compat::Class;
-
-class MIDI::Stream {
-    use MIDI::Stream::Tables ();
-
-    method continue { MIDI::Stream::Tables::continue() }
-    method stop { MIDI::Stream::Tables::stop() }
-
-}
+our $VERSION = 0.00;
 
 1;
 
-__END__
-
-=pod
-
 =encoding UTF-8
-
-=head1 NAME
-
-MIDI::Stream - MIDI bytestream decoding and encoding
-
-=head1 VERSION
-
-version 0.00
 
 =head1 DESCRIPTION
 
+MIDI::Stream includes a realtime MIDI bytestream
+L<encoder|MIDI::Stream::Encoder> and L<decoder|MIDI::Stream::Decoder>.
 
+The classes in this distribution are stateful and are designed so a single
+instance serves a single MIDI port, or device, or bytestream. Attempting to
+consume or generate multiple streams in a single instance could result in
+partial message collision. running status confusion, or inaccurate tempo
+measurement - there are no MIDI-merge facilities.
+
+For turning midi bytestreams into usable events see L<MIDI::Stream::Encoder>.
+
+For turning performance and system events into a MIDI bytes suitable for
+passing to MIDI hardware and other MIDI software see L<MIDI::Stream::Decoder>.
 
 =cut
-
