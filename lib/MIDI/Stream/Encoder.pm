@@ -62,7 +62,6 @@ our $VERSION = 0.00;
 
 use Time::HiRes qw/ gettimeofday tv_interval /;
 use Carp qw/ carp croak /;
-use List::Util qw/ mesh /;
 use MIDI::Stream::Tables qw/
     has_channel keys_for is_single_byte
     status_byte split_bytes is_realtime
