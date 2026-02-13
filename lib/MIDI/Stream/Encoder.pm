@@ -66,7 +66,6 @@ use MIDI::Stream::Tables qw/
     has_channel keys_for is_single_byte
     status_byte split_bytes is_realtime
 /;
-use namespace::autoclean;
 
 =head1 METHODS
 

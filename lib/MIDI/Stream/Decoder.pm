@@ -72,7 +72,6 @@ use Carp qw/ carp croak /;
 use MIDI::Stream::Tables qw/ is_cc is_realtime message_length combine_bytes /;
 use MIDI::Stream::FIFO;
 use MIDI::Stream::EventFactory;
-use namespace::autoclean;
 
 =head1 METHODS
 

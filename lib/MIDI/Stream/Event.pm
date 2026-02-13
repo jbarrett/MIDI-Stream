@@ -49,7 +49,6 @@ our $VERSION = 0.00;
 
 use Carp qw/ croak /;
 use MIDI::Stream::Tables qw/ status_name keys_for /;
-use namespace::autoclean;
 
 =head1 METHODS
 

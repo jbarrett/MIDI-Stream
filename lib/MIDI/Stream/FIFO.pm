@@ -10,7 +10,6 @@ class MIDI::Stream::FIFO;
 our $VERSION = 0.00;
 
 use List::Util qw/ reduce /;
-use namespace::autoclean;
 
 field $length :param = 24;
 field $members = [];
