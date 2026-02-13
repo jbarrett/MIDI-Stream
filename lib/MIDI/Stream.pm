@@ -1,6 +1,6 @@
 use v5.26;
 use warnings;
-use Feature::Compat::Class;
+use Feature::Compat::Class 0.08;
 
 # ABSTRACT: MIDI bytestream decoding and encoding
 
